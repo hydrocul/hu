@@ -1,0 +1,9 @@
+class/
+touch/
+tmp/
+dist/
+dist-tmp/
+scaladoc/
+*.tmp
+*.hprof
+
