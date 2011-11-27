@@ -133,16 +133,14 @@ object IO {
   def sequential[A](list: Seq[IO[A]]): IO[Seq[A]] = {
     def sub[A](list: Seq[IO[A]], result: List[A]): IO[List[A]] = {
       if(list.isEmpty){
-        IO()(result);
+        IO()(result.reverse);
       } else {
         list.head >>= { a =>
           sub(list.tail, a :: result);
         }
       }
     }
-    sub(list, Nil) >>== { l: List[A] =>
-      l.toIndexedSeq;
-    }
+    sub(list, Nil);
   }
 
   def parallel[A](list: IndexedSeq[IO[A]]): IO[IndexedSeq[A]] = {
