@@ -48,37 +48,41 @@ object Jdbc {
     usingSqlite(fname){ conn =>
       {
         conn.execute("create table persons (name, age);");
-      } >>= IO.sequential(Vector(
-        {
-          conn.usingStatement("insert into persons (name, age) values(?, ?);"){ st =>
-            st.execute(List("Suzuki", 31));
-          }
-        } >>= { u =>
-          IO.sequential(Vector(
-            conn.usingStatement("select name, age from persons;"){ st =>
-              st.usingResult(List()){ rs: Stream[Map[Symbol, Any]] =>
-                List(
-                  assertTrue(!rs.isEmpty),
-                  assertEquals(List(Map('name -> "Suzuki", 'age -> "31")), rs)
-                );
-              }
-            },
-            conn.usingStatement("select name, age from persons where name=?;"){ st =>
-              st.usingResult(List("Suzuki")){ rs: Stream[Map[Symbol, Any]] =>
-                List(
-                  assertTrue(!rs.isEmpty),
-                  assertEquals(List(Map('name -> "Suzuki", 'age -> "31")), rs)
-                );
-              }
-            },
-            IO[Seq[Option[String]]](){
-              List(
-                assertTrue(file.exists)
-              );
+      } >>=
+      { _ =>
+        IO.sequential(Vector(
+          {
+            conn.usingStatement("insert into persons (name, age) values(?, ?);"){ st =>
+              st.execute(List("Suzuki", 31));
             }
-          )) >>== (_.flatten);
-        }
-      )) >>== (_.flatten);
+          } >>=
+          { _ =>
+            IO.sequential(Vector(
+              conn.usingStatement("select name, age from persons;"){ st =>
+                st.usingResult(List()){ rs: Stream[Map[Symbol, Any]] =>
+                  List(
+                    assertTrue(!rs.isEmpty),
+                    assertEquals(List(Map('name -> "Suzuki", 'age -> "31")), rs)
+                  );
+                }
+              },
+              conn.usingStatement("select name, age from persons where name=?;"){ st =>
+                st.usingResult(List("Suzuki")){ rs: Stream[Map[Symbol, Any]] =>
+                  List(
+                    assertTrue(!rs.isEmpty),
+                    assertEquals(List(Map('name -> "Suzuki", 'age -> "31")), rs)
+                  );
+                }
+              },
+              IO[Seq[Option[String]]](){
+                List(
+                  assertTrue(file.exists)
+                );
+              }
+            )) >>== (_.flatten);
+          }
+        )) >>== (_.flatten);
+      }
     } toFinally IO(){
       file.delete();
     }

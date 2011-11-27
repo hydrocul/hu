@@ -50,7 +50,9 @@ private class JdbcPreparedStatementImpl(st: java.sql.PreparedStatement)
             st.setString(index, a.toString); // TODO 型別に処理すべき
         }
       } >>=
-      setupArgsSub(index + 1, args.tail);
+      { _ =>
+        setupArgsSub(index + 1, args.tail);
+      }
     }
   }
 
