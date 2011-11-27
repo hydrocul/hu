@@ -201,9 +201,29 @@ object IO {
     }
   }
 
+  private def iotest: IO[Seq[Option[String]]] = {
+    import TestLib._;
+    val io1 = IO.sequential(Vector(IO()(1), IO()(2), IO()(3))) >>== { r: Seq[Int] =>
+      List(
+        assertEquals(Vector(1, 2, 3), r)
+      );
+    }
+    val io2 = IO.parallel(Vector(IO()(1), IO()(2), IO()(3))) >>== { r: Seq[Int] =>
+      List(
+        assertEquals(Vector(1, 2, 3), r)
+      );
+    }
+    io1 >>= { r1 =>
+      io2 >>== { r2 =>
+        r1 ++ r2;
+      }
+    }
+  }
+
   private def test(all: Boolean){
 
     val test2: Seq[IO[Seq[Option[String]]]] = List(
+      iotest,
       IO()(UrlUtil.test),
       IO()(CsvParser.test),
       jdbc.Jdbc.test
