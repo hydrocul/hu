@@ -1,0 +1,6 @@
+Scalaで使うライブラリ。
+
+hydrocul.hu.IO は Haskell のIOを真似して作ったクラス。
+hydrocul.hu の中では、IO 以外の方法での副作用禁止で純粋関数のみ。
+
+hydrocul.util はIOを使っていない汎用的なライブラリ。
