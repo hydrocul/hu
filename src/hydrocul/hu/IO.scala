@@ -21,11 +21,13 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
     }
   });
 
+/*
   def >>= [A1, A2, B](p: (A1, A2) => IO[B])(implicit ev: A <:< (A1, A2)): IO[B] =
     this >>= { a => p.tupled(ev(a)); }
 
   def >>= [A1, A2, A3, B](p: (A1, A2, A3) => IO[B])(implicit ev: A <:< (A1, A2, A3)): IO[B] =
     this >>= { a => p.tupled(ev(a)); }
+*/
 
   def >>= [B](io: => IO[B])(implicit ev: A <:< Unit): IO[B] =
     this >>= { u: A => io; }
@@ -47,11 +49,13 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
     }
   });
 
+/*
   def >>== [A1, A2, B](p: (A1, A2) => B)(implicit ev: A <:< (A1, A2)): IO[B] =
     this >>== { a => p.tupled(ev(a)); }
 
   def >>== [A1, A2, A3, B](p: (A1, A2, A3) => B)(implicit ev: A <:< (A1, A2, A3)): IO[B] =
     this >>== { a => p.tupled(ev(a)); }
+*/
 
   def toEither: IO[Either[Throwable, A]] = new IO[Either[Throwable, A]](
       { p2: (Either[Throwable, Either[Throwable, A]] => Unit) =>
