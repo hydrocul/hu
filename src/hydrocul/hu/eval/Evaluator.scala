@@ -117,8 +117,10 @@ class Evaluator {
 
       val bin = EncodingMania.decodeBase64(serialized.replaceAll("(?m)^// ", ""));
       val value = StreamUtil.bin2obj(bin);
-      bind(valName, typeStr, value);
-      IO()(Some(value));
+      bind(valName, typeStr, value) >>=
+      { _ =>
+        IO()(value);
+      }
 
     } else {
       // シリアライズがまだの場合
@@ -129,9 +131,24 @@ class Evaluator {
           case Some(r) => r;
           case _ => throw new Exception(t._2);
         }
+      } >>=
+      { result =>
+        typeOf(valName) >>= {
+          case Some(typeStr) =>
+            val serialized = EncodingMania.encodeBase64(StreamUtil.obj2bin(
+              result.asInstanceOf[AnyRef])).replaceAll("(?m)^", "// ");
+            val code2 = code + "\n";
+            val hash = CipherUtil.encodeHex(CipherUtil.binaryToHash(
+              EncodingMania.encodeChar(code2, "UTF-8")));
+            val serializedSource = code2 + "// --serialized--" + hash +
+              "--" + typeStr + "--\n" + serialized;
+            file.write(Some(EncodingMania.encodeChar(serializedSource, "UTF-8"))) >>== { _ =>
+              result;
+            }
+          case None =>
+            throw new Exception();
+        }
       }
-
-      // TODO シリアライズして保存する処理が必要
 
     }
   }
