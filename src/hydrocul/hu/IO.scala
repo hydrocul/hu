@@ -83,6 +83,7 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
   }
 
   def exec(){
+    val a = new Object();
     task { r =>
       r match {
         case Right(r) =>
@@ -92,6 +93,12 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
         case Left(e) =>
           e.printStackTrace();
       }
+      a.synchronized {
+        a.notifyAll();
+      }
+    }
+    a.synchronized {
+      a.wait();
     }
   }
 
