@@ -133,20 +133,30 @@ class Evaluator {
         }
       } >>=
       { result =>
-        typeOf(valName) >>= {
-          case Some(typeStr) =>
-            val serialized = EncodingMania.encodeBase64(StreamUtil.obj2bin(
-              result.asInstanceOf[AnyRef])).replaceAll("(?m)^", "// ");
-            val code2 = code + "\n";
-            val hash = CipherUtil.encodeHex(CipherUtil.binaryToHash(
-              EncodingMania.encodeChar(code2, "UTF-8")));
-            val serializedSource = code2 + "// --serialized--" + hash +
-              "--" + typeStr + "--\n" + serialized;
-            file.write(Some(EncodingMania.encodeChar(serializedSource, "UTF-8"))) >>== { _ =>
-              result;
+        val binOpt = try {
+          Some(StreamUtil.obj2bin(result.asInstanceOf[AnyRef]));
+            // TODO asInstanceOf[AnyRef] はとりあえずの対応
+        } catch { case e: java.io.NotSerializableException =>
+          None;
+        }
+        binOpt match {
+          case Some(bin) =>
+            typeOf(valName) >>= {
+              case Some(typeStr) =>
+                val serialized = EncodingMania.encodeBase64(bin).replaceAll("(?m)^", "// ");
+                val code2 = code + "\n";
+                val hash = CipherUtil.encodeHex(CipherUtil.binaryToHash(
+                  EncodingMania.encodeChar(code2, "UTF-8")));
+                val serializedSource = code2 + "// --serialized--" + hash +
+                  "--" + typeStr + "--\n" + serialized;
+                file.write(Some(EncodingMania.encodeChar(serializedSource, "UTF-8"))) >>== { _ =>
+                  result;
+                }
+              case None =>
+                throw new Exception();
             }
           case None =>
-            throw new Exception();
+            IO()(result);
         }
       }
 
