@@ -21,7 +21,7 @@ private[jdbc] class JdbcConnectionImpl(conn: java.sql.Connection)
   def usingStatement[A](sql: String)(p: JdbcPreparedStatement => IO[A]): IO[A] = {
     IO(){
       val st = conn.prepareStatement(sql);
-      new JdbcPreparedStatementImpl(st);
+      new JdbcPreparedStatementImpl(st, sql);
     } >>= { st =>
       Jdbc.resourceUsing(st)(p);
     }

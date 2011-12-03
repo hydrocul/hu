@@ -10,12 +10,16 @@ trait JdbcPreparedStatement {
 
 }
 
-private class JdbcPreparedStatementImpl(st: java.sql.PreparedStatement)
+private class JdbcPreparedStatementImpl(st: java.sql.PreparedStatement, sql: String)
   extends JdbcPreparedStatement with Jdbc.Resource {
 
   def execute(args: Seq[Any]): IO[Unit] = {
     setupArgs(args) >>= { u =>
-      IO()(st.executeUpdate());
+      IO()(try {
+        st.executeUpdate();
+      } catch { case e =>
+        throw new Exception("sql: " + sql + " args: " + args.toString, e);
+      });
     }
   }
 
