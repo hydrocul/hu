@@ -14,23 +14,35 @@ private class JdbcPreparedStatementImpl(st: java.sql.PreparedStatement, sql: Str
   extends JdbcPreparedStatement with Jdbc.Resource {
 
   def execute(args: Seq[Any]): IO[Unit] = {
-    setupArgs(args) >>= { u =>
-      IO()(try {
-        st.executeUpdate();
-      } catch { case e =>
-        throw new Exception("sql: " + sql + " args: " + args.toString, e);
-      });
+    try {
+      setupArgs(args) >>= { u =>
+        IO()(try {
+          st.executeUpdate();
+        } catch { case e =>
+          throw new Exception("sql: " + sql + " args: " + args.toString, e);
+        });
+      }
+    } catch { case e =>
+      throw new Exception("sql: " + sql + " args: " + args.toString, e);
     }
   }
 
   def usingResult[A](args: Seq[Any])(p: Stream[Map[Symbol, Any]] => A): IO[A] = {
-    setupArgs(args) >>== { u =>
-      val rs = st.executeQuery();
-      new JdbcResultSetImpl(rs);
-    } >>= { rs =>
-      Jdbc.resourceUsing(rs){ rs =>
-        IO()(p(rs.result));
+    try {
+      setupArgs(args) >>== { u =>
+        try {
+          val rs = st.executeQuery();
+          new JdbcResultSetImpl(rs);
+        } catch { case e =>
+          throw new Exception("sql: " + sql + " args: " + args.toString, e);
+        }
+      } >>= { rs =>
+        Jdbc.resourceUsing(rs){ rs =>
+          IO()(p(rs.result));
+        }
       }
+    } catch { case e =>
+      throw new Exception("sql: " + sql + " args: " + args.toString, e);
     }
   }
 
