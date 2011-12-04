@@ -1,5 +1,7 @@
 package hydrocul.hu;
 
+import scala.collection.immutable.Queue;
+
 import hydrocul.hu.{ task => taskmanager }
 
 final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => Unit) {
@@ -191,6 +193,94 @@ object IO {
         }
       }
     });
+  }
+
+  def pipe[A]: (IO[A], (Either[Throwable, A] => IO[Unit])) = {
+
+    val sync = new Object;
+    var value: Either[Throwable, A] = null;
+    var receiver: (Either[Throwable, A] => Unit) = null;
+
+    def thrue(){
+      taskEngine.addTask(new taskmanager.Task({() =>
+        try {
+          receiver(value);
+        } catch { case e =>
+          receiver(Left(e));
+        }
+      }, None));
+      value = null;
+      receiver = null;
+    }
+
+    val io = new IO[A]({ p: (Either[Throwable, A] => Unit) =>
+      sync.synchronized {
+        receiver = p;
+        if(value != null){
+          thrue();
+        }
+      }
+    })
+
+    val sender = { a: Either[Throwable, A] => IO(){
+      sync.synchronized {
+        value = a;
+        if(receiver != null){
+          thrue();
+        }
+      }
+    } }
+
+    (io, sender);
+
+  }
+
+  trait Mailbox[A]{
+
+    def send(msg: A): IO[Unit];
+
+    def receive: IO[A];
+
+  }
+
+  def mailbox[A]: Mailbox[A] = new Mailbox[A]{
+
+    def send(msg: A): IO[Unit] = {
+      IO[IO[Unit]](){
+        sync.synchronized {
+          if(queue2.isEmpty){
+            val t = pipe[A];
+            queue1.enqueue(t._1);
+            t._2.apply(Right(msg));
+          } else {
+            val t = queue2.dequeue;
+            queue2 = t._2;
+            t._1.apply(Right(msg));
+          }
+        }
+      } >>= { io => io }
+    }
+
+    def receive: IO[A] = {
+      IO[IO[A]](){
+        sync.synchronized {
+          if(queue1.isEmpty){
+            val t = pipe[A];
+            queue2 = queue2.enqueue(t._2);
+            t._1;
+          } else {
+            val t = queue1.dequeue;
+            queue1 = t._2;
+            t._1;
+          }
+        }
+      } >>= { io => io }
+    }
+
+    private val sync = new Object;
+    private var queue1 = Queue[IO[A]]();
+    private var queue2 = Queue[Either[Throwable, A] => IO[Unit]]();
+
   }
 
   def main(args: Array[String]){
