@@ -202,11 +202,13 @@ object IO {
     var receiver: (Either[Throwable, A] => Unit) = null;
 
     def thrue(){
+      val v = value;
+      val r = receiver;
       taskEngine.addTask(new taskmanager.Task({() =>
         try {
-          receiver(value);
+          r(v);
         } catch { case e =>
-          receiver(Left(e));
+          r(Left(e));
         }
       }, None));
       value = null;
@@ -310,10 +312,35 @@ object IO {
         assertEquals(Vector(1, 2, 3), r)
       );
     }
+    val io3 = {
+      val t = pipe[Int];
+      t._2.apply(Right(3)) >>= { _ =>
+        t._1 map { r =>
+          List(
+            assertEquals(3, r)
+          )
+        }
+      }
+    }
+    val io4 = {
+      val t = pipe[Int];
+      IO.parallel(Vector(
+        sleep(taskmanager.TimeOut(1000)) >>= { _ =>
+          t._2.apply(Right(4));
+        },
+        t._1
+      )) map { v =>
+        List(
+          assertEquals(Vector((), 4), v)
+        )
+      }
+    }
     for (
       r1 <- io1;
-      r2 <- io2
-    ) yield r1 ++ r2;
+      r2 <- io2;
+      r3 <- io3;
+      r4 <- io4
+    ) yield r1 ++ r2 ++ r3 ++ r4;
 /*
     io1 >>= { r1 =>
       io2 map { r2 =>
