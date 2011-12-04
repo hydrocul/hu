@@ -97,11 +97,16 @@ class Evaluator {
 
   private[this] def parseObjectText(valName: String, source: String,
       file: File): IO[Any] = {
-    val (code, hash, typeStr, serialized) = source match {
+    val (codeTmp, hash, typeStr, serialized) = source match {
       case Evaluator.SepPattern(code, hash, typeStr, serialized) =>
         (code, hash, typeStr, serialized);
       case _ =>
         (source, "", "", "");
+    }
+    val code = if(codeTmp.endsWith("\n")){
+      codeTmp;
+    } else {
+      codeTmp + "\n";
     }
     if(!hash.isEmpty && {
 
@@ -125,7 +130,7 @@ class Evaluator {
     } else {
       // シリアライズがまだの場合
 
-      val source = "val " + valName + " = (" + code + ");";
+      val source = "val " + valName + " = { " + code + " }";
       eval(source) map { t =>
         t._1 match {
           case Some(r) => r;
@@ -144,10 +149,9 @@ class Evaluator {
             typeOf(valName) >>= {
               case Some(typeStr) =>
                 val serialized = EncodingMania.encodeBase64(bin).replaceAll("(?m)^", "// ");
-                val code2 = code + "\n";
                 val hash = CipherUtil.encodeHex(CipherUtil.binaryToHash(
-                  EncodingMania.encodeChar(code2, "UTF-8")));
-                val serializedSource = code2 + "// --serialized--" + hash +
+                  EncodingMania.encodeChar(code, "UTF-8")));
+                val serializedSource = code + "// --serialized--" + hash +
                   "--" + typeStr + "--\n" + serialized;
                 file.write(Some(EncodingMania.encodeChar(serializedSource, "UTF-8"))) map { _ =>
                   result;
