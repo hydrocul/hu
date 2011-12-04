@@ -36,11 +36,11 @@ class Evaluator {
         val value: IO[Option[Any]] = t._1;
         val name = t._2;
         val msg = t._3;
-        value >>== { opt =>
+        value map { opt =>
           (opt, name, msg);
         }
       }
-    } >>== { t =>
+    } map { t =>
       val result: Option[Any] = t._1;
       val name = t._2;
       val msg = t._3;
@@ -88,7 +88,7 @@ class Evaluator {
         case None =>
           IO()(None);
         case Some(bin) =>
-          parseObjectText(valName, EncodingMania.decodeChar(bin, "UTF-8"), file) >>== { v =>
+          parseObjectText(valName, EncodingMania.decodeChar(bin, "UTF-8"), file) map { v =>
             Some(v);
           }
       }
@@ -126,7 +126,7 @@ class Evaluator {
       // シリアライズがまだの場合
 
       val source = "val " + valName + " = (" + code + ");";
-      eval(source) >>== { t =>
+      eval(source) map { t =>
         t._1 match {
           case Some(r) => r;
           case _ => throw new Exception(t._2);
@@ -149,7 +149,7 @@ class Evaluator {
                   EncodingMania.encodeChar(code2, "UTF-8")));
                 val serializedSource = code2 + "// --serialized--" + hash +
                   "--" + typeStr + "--\n" + serialized;
-                file.write(Some(EncodingMania.encodeChar(serializedSource, "UTF-8"))) >>== { _ =>
+                file.write(Some(EncodingMania.encodeChar(serializedSource, "UTF-8"))) map { _ =>
                   result;
                 }
               case None =>

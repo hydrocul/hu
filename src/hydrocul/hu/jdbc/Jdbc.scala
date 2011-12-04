@@ -79,9 +79,9 @@ object Jdbc {
                   assertTrue(file.exists)
                 );
               }
-            )) >>== (_.flatten);
+            )) map (_.flatten);
           }
-        )) >>== (_.flatten);
+        )) map (_.flatten);
       }
     } toFinally IO(){
       file.delete();

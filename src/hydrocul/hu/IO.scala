@@ -4,7 +4,7 @@ import hydrocul.hu.{ task => taskmanager }
 
 final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => Unit) {
 
-  def >>= [B](p: A => IO[B]): IO[B] = new IO[B]({ p2: (Either[Throwable, B] => Unit) =>
+  def flatMap[B](p: A => IO[B]): IO[B] = new IO[B]({ p2: (Either[Throwable, B] => Unit) =>
     task { a: Either[Throwable, A] =>
       a match {
         case Right(a) =>
@@ -21,6 +21,8 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
     }
   });
 
+  def >>= [B](p: A => IO[B]): IO[B] = flatMap(p);
+
 /*
   def >>= [A1, A2, B](p: (A1, A2) => IO[B])(implicit ev: A <:< (A1, A2)): IO[B] =
     this >>= { a => p.tupled(ev(a)); }
@@ -32,7 +34,7 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
     this >>= { u: A => io; }
 */
 
-  def >>== [B](p: A => B): IO[B] = new IO[B]({ p2: (Either[Throwable, B] => Unit) =>
+  def map[B](p: A => B): IO[B] = new IO[B]({ p2: (Either[Throwable, B] => Unit) =>
     task { a: Either[Throwable, A] =>
       a match {
         case Right(a) =>
@@ -49,13 +51,8 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
     }
   });
 
-/*
-  def >>== [A1, A2, B](p: (A1, A2) => B)(implicit ev: A <:< (A1, A2)): IO[B] =
-    this >>== { a => p.tupled(ev(a)); }
-
-  def >>== [A1, A2, A3, B](p: (A1, A2, A3) => B)(implicit ev: A <:< (A1, A2, A3)): IO[B] =
-    this >>== { a => p.tupled(ev(a)); }
-*/
+  @deprecated("use map", "")
+  def >>== [B](p: A => B): IO[B] = map(p);
 
   def toEither: IO[Either[Throwable, A]] = new IO[Either[Throwable, A]](
       { p2: (Either[Throwable, Either[Throwable, A]] => Unit) =>
@@ -78,17 +75,19 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
 
   def toFinally(p: IO[Unit]): IO[A] = {
     toEither >>= { a: Either[Throwable, A] =>
-      p >>== { u => a; }
+      p.map { u => a; }
     } toThrowable;
   }
 
-  def exec(){
+  def exec(): A = {
     val a = new Object();
+    @volatile var ret: Any = null;
     task { r =>
       r match {
         case Right(r) =>
           if(!r.isInstanceOf[Unit]){
             println(r);
+            ret = r;
           }
         case Left(e) =>
           e.printStackTrace();
@@ -100,6 +99,7 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
     a.synchronized {
       a.wait();
     }
+    ret.asInstanceOf[A];
   }
 
 }
@@ -210,21 +210,27 @@ object IO {
 
   private def iotest: IO[Seq[Option[String]]] = {
     import TestLib._;
-    val io1 = IO.sequential(Vector(IO()(1), IO()(2), IO()(3))) >>== { r: Seq[Int] =>
+    val io1 = IO.sequential(Vector(IO()(1), IO()(2), IO()(3))).map { r: Seq[Int] =>
       List(
         assertEquals(Vector(1, 2, 3), r)
       );
     }
-    val io2 = IO.parallel(Vector(IO()(1), IO()(2), IO()(3))) >>== { r: Seq[Int] =>
+    val io2 = IO.parallel(Vector(IO()(1), IO()(2), IO()(3))).map { r: Seq[Int] =>
       List(
         assertEquals(Vector(1, 2, 3), r)
       );
     }
+    for (
+      r1 <- io1;
+      r2 <- io2
+    ) yield r1 ++ r2;
+/*
     io1 >>= { r1 =>
-      io2 >>== { r2 =>
+      io2 map { r2 =>
         r1 ++ r2;
       }
     }
+*/
   }
 
   private def test(all: Boolean){

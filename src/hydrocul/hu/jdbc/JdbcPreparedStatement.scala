@@ -29,7 +29,7 @@ private class JdbcPreparedStatementImpl(st: java.sql.PreparedStatement, sql: Str
 
   def usingResult[A](args: Seq[Any])(p: Stream[Map[Symbol, Any]] => A): IO[A] = {
     try {
-      setupArgs(args) >>== { u =>
+      setupArgs(args) map { u =>
         try {
           val rs = st.executeQuery();
           new JdbcResultSetImpl(rs);
