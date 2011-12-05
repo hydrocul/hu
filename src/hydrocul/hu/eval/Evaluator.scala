@@ -82,21 +82,24 @@ class Evaluator {
 
   }
 
-  def loadObject(valName: String, file: File): IO[Option[Any]] = {
+}
+
+object Evaluator {
+
+  def loadObject(file: File): IO[Option[Any]] = {
     file.read >>= { opt =>
       opt match {
         case None =>
           IO()(None);
         case Some(bin) =>
-          parseObjectText(valName, EncodingMania.decodeChar(bin, "UTF-8"), file) map { v =>
+          parseObjectText(EncodingMania.decodeChar(bin, "UTF-8"), file) map { v =>
             Some(v);
           }
       }
     }
   }
 
-  private[this] def parseObjectText(valName: String, source: String,
-      file: File): IO[Any] = {
+  private[this] def parseObjectText(source: String, file: File): IO[Any] = {
     val (codeTmp, hash, typeStr, serialized) = source match {
       case Evaluator.SepPattern(code, hash, typeStr, serialized) =>
         (code, hash, typeStr, serialized);
@@ -122,16 +125,17 @@ class Evaluator {
 
       val bin = EncodingMania.decodeBase64(serialized.replaceAll("(?m)^// ", ""));
       val value = StreamUtil.bin2obj(bin);
-      bind(valName, typeStr, value) >>=
-      { _ =>
-        IO()(value);
-      }
+      IO()(value);
 
     } else {
       // シリアライズがまだの場合
 
+      val evaluator = new Evaluator;
+
+      val valName = "parsedObject";
+
       val source = "val " + valName + " = { " + code + " }";
-      eval(source) map { t =>
+      evaluator.eval(source) map { t =>
         t._1 match {
           case Some(r) => r;
           case _ => throw new Exception(t._2);
@@ -146,7 +150,7 @@ class Evaluator {
         }
         binOpt match {
           case Some(bin) =>
-            typeOf(valName) >>= {
+            evaluator.typeOf(valName) >>= {
               case Some(typeStr) =>
                 val serialized = EncodingMania.encodeBase64(bin).replaceAll("(?m)^", "// ");
                 val hash = CipherUtil.encodeHex(CipherUtil.binaryToHash(
@@ -166,10 +170,6 @@ class Evaluator {
 
     }
   }
-
-}
-
-private[eval] object Evaluator {
 
   private val SepPattern = "(?ms)(.*)^// --serialized--([a-fA-F0-9]+)--([^-]+)--$(.*)".r;
 
