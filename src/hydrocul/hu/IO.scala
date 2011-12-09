@@ -25,17 +25,6 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
 
   def >>= [B](p: A => IO[B]): IO[B] = flatMap(p);
 
-/*
-  def >>= [A1, A2, B](p: (A1, A2) => IO[B])(implicit ev: A <:< (A1, A2)): IO[B] =
-    this >>= { a => p.tupled(ev(a)); }
-
-  def >>= [A1, A2, A3, B](p: (A1, A2, A3) => IO[B])(implicit ev: A <:< (A1, A2, A3)): IO[B] =
-    this >>= { a => p.tupled(ev(a)); }
-
-  def >>= [B](io: => IO[B])(implicit ev: A <:< Unit): IO[B] =
-    this >>= { u: A => io; }
-*/
-
   def map[B](p: A => B): IO[B] = new IO[B]({ p2: (Either[Throwable, B] => Unit) =>
     task { a: Either[Throwable, A] =>
       a match {
@@ -372,13 +361,6 @@ object IO {
       r4 <- io4
       r5 <- io5
     } yield r1 ++ r2 ++ r3 ++ r4 ++ r5;
-/*
-    io1 >>= { r1 =>
-      io2 map { r2 =>
-        r1 ++ r2;
-      }
-    }
-*/
   }
 
   private def test(all: Boolean){
