@@ -56,6 +56,22 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
   @deprecated("use map", "")
   def >>== [B](p: A => B): IO[B] = map(p);
 
+  def filter(p: A => Boolean): IO[A] = new IO[A](
+      { p2: (Either[Throwable, A] => Unit) =>
+    task { a: Either[Throwable, A] =>
+      a match {
+        case Right(a) =>
+          if(p(a)){
+            p2(Right(a));
+          } else {
+            p2(Left(new MatchError(a)));
+          }
+        case Left(e) =>
+          p2(Left(e));
+      }
+    }
+  });
+
   def toEither: IO[Either[Throwable, A]] = new IO[Either[Throwable, A]](
       { p2: (Either[Throwable, Either[Throwable, A]] => Unit) =>
     task { a: Either[Throwable, A] =>
@@ -335,12 +351,27 @@ object IO {
         )
       }
     }
-    for (
-      r1 <- io1;
-      r2 <- io2;
-      r3 <- io3;
+    val io5 = {
+      def f() = IO()((1, 3));
+      def g(a: Int, b: Int) = IO()(a + b);
+      def h(i: Int) = IO()(
+        List(
+          assertEquals(4, i)
+        )
+      );
+      for {
+        (a, b) <- f()
+        r <- g(a, b)
+        s <- h(r)
+      } yield s;
+    }
+    for {
+      r1 <- io1
+      r2 <- io2
+      r3 <- io3
       r4 <- io4
-    ) yield r1 ++ r2 ++ r3 ++ r4;
+      r5 <- io5
+    } yield r1 ++ r2 ++ r3 ++ r4 ++ r5;
 /*
     io1 >>= { r1 =>
       io2 map { r2 =>
