@@ -29,8 +29,6 @@ private[hu] class TaskEngine {
     }, delay.delay, delay.timeunit);
   }
 
-  private val executor = new ScheduledThreadPoolExecutor(1);
-
   private val taskQueue = new LinkedBlockingQueue[Runnable]();
 
   private val maxThreadCount = {
@@ -44,6 +42,8 @@ private[hu] class TaskEngine {
 
   // 稼働中のスレッドと起動準備中のスレッドの数
   private val runningThreadCount = new AtomicInteger(0);
+
+  private val executor = new ScheduledThreadPoolExecutor(1); // TODO スレッドがずっと残り続けてしまう
 
   @tailrec
   private def createThreadIfShort(){

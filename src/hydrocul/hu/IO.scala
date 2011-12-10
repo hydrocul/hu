@@ -201,6 +201,12 @@ object IO {
     }
   }
 
+  def seqt[A1, A2, A3](a1: IO[A1], a2: IO[A2], a3: IO[A3]): IO[(A1, A2, A3)] = {
+    sequential(Vector(a1, a2, a3)) map { v =>
+      (v(0).asInstanceOf[A1], v(1).asInstanceOf[A2], v(2).asInstanceOf[A3]);
+    }
+  }
+
   def parallel[A](list: IndexedSeq[IO[A]]): IO[IndexedSeq[A]] = {
     val sync = new taskmanager.Synchronizer;
     @volatile var count: Int = list.size;
@@ -238,6 +244,20 @@ object IO {
         }
       }
     });
+  }
+
+  def par[A](ios: IO[A]*): IO[IndexedSeq[A]] = parallel(ios.toIndexedSeq);
+
+  def part[A1, A2](a1: IO[A1], a2: IO[A2]): IO[(A1, A2)] = {
+    parallel(Vector(a1, a2)) map { v =>
+      (v(0).asInstanceOf[A1], v(1).asInstanceOf[A2]);
+    }
+  }
+
+  def part[A1, A2, A3](a1: IO[A1], a2: IO[A2], a3: IO[A3]): IO[(A1, A2, A3)] = {
+    parallel(Vector(a1, a2, a3)) map { v =>
+      (v(0).asInstanceOf[A1], v(1).asInstanceOf[A2], v(2).asInstanceOf[A3]);
+    }
   }
 
   def pipe[A]: (IO[A], (Either[Throwable, A] => IO[Unit])) = {
