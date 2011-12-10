@@ -23,6 +23,7 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
     }
   });
 
+  // @deprecated("use map", "flatMap")
   def >>= [B](p: A => IO[B]): IO[B] = flatMap(p);
 
   def map[B](p: A => B): IO[B] = new IO[B]({ p2: (Either[Throwable, B] => Unit) =>
@@ -60,6 +61,8 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
       }
     }
   });
+
+  def flatten[B](implicit ev: A <:< IO[B]): IO[B] = flatMap(io => ev(io));
 
   def toEither: IO[Either[Throwable, A]] = new IO[Either[Throwable, A]](
       { p2: (Either[Throwable, Either[Throwable, A]] => Unit) =>
@@ -159,6 +162,12 @@ object IO {
       }
     }
     sub(list, Nil);
+  }
+
+  def sequential[A1, A2](a1: IO[A1], a2: IO[A2]): IO[(A1, A2)] = {
+    sequential(Vector(a1, a2)) map { v =>
+      (v(0).asInstanceOf[A1], v(1).asInstanceOf[A2]);
+    }
   }
 
   def parallel[A](list: IndexedSeq[IO[A]]): IO[IndexedSeq[A]] = {
@@ -265,7 +274,7 @@ object IO {
             t._1.apply(Right(msg));
           }
         }
-      } >>= { io => io }
+      } flatten;
     }
 
     def receive: IO[A] = {
@@ -281,7 +290,7 @@ object IO {
             t._1;
           }
         }
-      } >>= { io => io }
+      } flatten;
     }
 
     private val sync = new Object;
