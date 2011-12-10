@@ -83,11 +83,40 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
     }
   });
 
+  @deprecated("use iotry and iofinally", "")
   def toFinally(p: IO[Unit]): IO[A] = {
     toEither >>= { a: Either[Throwable, A] =>
       p.map { u => a; }
     } toThrowable;
   }
+
+  def then[B](p: A => IO[B]): IO[B] = flatMap(p);
+
+  def iotry[B](p: A => IO[B]) = new {
+
+    def iofinally(p2: A => IO[Unit]): IO[B] = {
+      toEither.flatMap {
+        case Right(a) =>
+          p(a).toEither.flatMap {
+            case Right(a2) =>
+              p2(a).map { _ => Right(a2); }
+            case Left(e) =>
+              p2(a).map { _ => Left(e); }
+          }
+        case Left(e) =>
+          IO()(Left(e));
+      } toThrowable;
+    }
+
+  }
+
+  def thru(p: A => IO[Unit]): IO[A] = {
+    flatMap { a: A =>
+      p(a).map(_ => a);
+    }
+  }
+
+  def toUnit(implicit ev: A <:< Seq[Unit]): IO[Unit] = map(_ => ());
 
   def exec(): A = {
     val a = new Object();
@@ -164,7 +193,9 @@ object IO {
     sub(list, Nil);
   }
 
-  def sequential[A1, A2](a1: IO[A1], a2: IO[A2]): IO[(A1, A2)] = {
+  def seq[A](ios: IO[A]*): IO[Seq[A]] = sequential(ios);
+
+  def seqt[A1, A2](a1: IO[A1], a2: IO[A2]): IO[(A1, A2)] = {
     sequential(Vector(a1, a2)) map { v =>
       (v(0).asInstanceOf[A1], v(1).asInstanceOf[A2]);
     }
@@ -363,13 +394,23 @@ object IO {
         s <- h(r)
       } yield s;
     }
+    val io6 = {
+      IO()(5) then {
+        i => IO()(i * 2);
+      } iotry {
+        i => IO()(List(assertEquals(10, i)));
+      } iofinally {
+        _ => IO()();
+      }
+    }
     for {
       r1 <- io1
       r2 <- io2
       r3 <- io3
       r4 <- io4
       r5 <- io5
-    } yield r1 ++ r2 ++ r3 ++ r4 ++ r5;
+      r6 <- io6
+    } yield r1 ++ r2 ++ r3 ++ r4 ++ r5 ++ r6;
   }
 
   private def test(all: Boolean){
