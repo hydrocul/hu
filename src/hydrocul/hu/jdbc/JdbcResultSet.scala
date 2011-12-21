@@ -7,7 +7,7 @@ private[jdbc] class JdbcResultSetImpl(rs: java.sql.ResultSet) extends Jdbc.Resou
   val result: Stream[Map[Symbol, Any]] = {
     val meta = rs.getMetaData;
     val meta2 = (0 until meta.getColumnCount).map { index =>
-      Symbol(meta.getColumnName(index + 1));
+      Symbol(meta.getColumnLabel(index + 1));
     }
     createResultSub(meta2);
   }
