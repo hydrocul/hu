@@ -180,6 +180,8 @@ object IO {
     });
   }
 
+  def sleep(delay: Long): IO[Unit] = sleep(taskmanager.TimeOut(delay));
+
   def sequential[A](list: Seq[IO[A]]): IO[Seq[A]] = {
     def sub[A](list: Seq[IO[A]], result: List[A]): IO[List[A]] = {
       if(list.isEmpty){
