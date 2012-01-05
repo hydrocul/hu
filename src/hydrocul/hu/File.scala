@@ -12,6 +12,8 @@ trait File {
 
   def isDirectory: IO[Boolean];
 
+  def exists: IO[Boolean];
+
   def list: IO[Map[String, File]];
 
   def getByName(name: String): Option[File];
@@ -83,6 +85,8 @@ object File {
     }
 
     override def isDirectory = IO[Boolean]()(file.isDirectory);
+
+    override def exists = IO[Boolean]()(file.exists);
 
     override def list = IO[Map[String, File]](){
       val list = file.listFiles;
