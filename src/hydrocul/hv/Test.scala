@@ -6,7 +6,8 @@ object Test {
     List(
       testTest,
       CipherUtil.test,
-      EncodingMania.test
+      EncodingMania.test,
+      Json.test
     )
   }
 

@@ -1,4 +1,4 @@
-package hydrocul.hu;
+package hydrocul.hv;
 
 import net.arnx.jsonic;
 
@@ -34,21 +34,20 @@ object Json {
     }
   }
 
-/*
-  private[hu] def test(io: TestIO){ // TODO
-    io.putTestTask(2){ io =>
-      val expected = Map(
-        "a" -> "abc",
-        "b" -> Vector(BigDecimal(123), BigDecimal(456)),
-        "c" -> true,
-        "d" -> false,
-        "e" -> None);
-      io.assertEquals(expected,
-        decode("{a:\"abc\", b:[123, 456], c:true, d:false, e:null}"));
-      io.assertEquals(expected,
-        decode("callback({a:\"abc\", b:[123, 456], c:true, d:false, e:null})"));
-    }
+  private[hv] def test(): Seq[Option[String]] = {
+    import TestLib._;
+    val expected = Map(
+      "a" -> "abc",
+      "b" -> Vector(BigDecimal(123), BigDecimal(456)),
+      "c" -> true,
+      "d" -> false,
+      "e" -> None);
+    List(
+      assertEquals(expected,
+        decode("{a:\"abc\", b:[123, 456], c:true, d:false, e:null}")),
+      assertEquals(expected,
+        decode("callback({a:\"abc\", b:[123, 456], c:true, d:false, e:null})"))
+    );
   }
-*/
 
 }

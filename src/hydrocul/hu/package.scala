@@ -8,6 +8,8 @@ package object hu {
 
   val EncodingMania = hv.EncodingMania;
 
+  val Json = hv.Json;
+
   val TestLib = hv.TestLib;
 
 }
