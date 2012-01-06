@@ -1,6 +1,11 @@
 Scalaで使うライブラリ。
 
-hydrocul.hu.IO は Haskell のIOを真似して作ったクラス。
-hydrocul.hu の中では、IO 以外の方法での副作用禁止で純粋関数のみ。
+hydrocul.hu.IO は Haskell のIOモナドを真似して作ったクラス。
+hydrocul.hu の中では、IO以外の方法での副作用禁止で純粋関数のみ。
 
 hydrocul.util はIOを使っていない汎用的なライブラリ。
+
+2012/01/06
+hydrocul.hu.IO の仕組みは、書きづらいし読みづらいし、REPLで動かしづらいので、やめようと思う。
+でも、ソースは維持し続けるつもり。
+hydrocul.hv では、副作用をIOモナドではなく、副作用のあるメソッド名の最後にIOと付けて管理してみる。
