@@ -7,7 +7,8 @@ object Test {
       testTest,
       CipherUtil.test,
       EncodingMania.test,
-      Json.test
+      Json.test,
+      http.WebBrowser.test
     )
   }
 
