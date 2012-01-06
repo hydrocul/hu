@@ -38,15 +38,4 @@ object CipherUtil {
     key;
   }
 
-/*
-  private[ht] def test(io: TestIO){ // TODO
-    io.putTestTask(2){ implicit io =>
-      val a = encodeCipher("abc".getBytes, "あいうえお".getBytes("UTF-8"));
-      io.assertEquals("07b91211306447be8244146ad5d07a03", encodeHex(a));
-      val b = new String(decodeCipher("abc".getBytes, a), "UTF-8");
-      io.assertEquals("あいうえお", b);
-    }
-  }
-*/
-
 }
