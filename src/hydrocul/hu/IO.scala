@@ -437,7 +437,13 @@ object IO {
 
   private def test(all: Boolean){
 
-    val test2: Seq[IO[Seq[Option[String]]]] = List(
+    val hvTest: Seq[IO[Seq[Option[String]]]] = hydrocul.hv.Test.test(all).map { f0 =>
+      IO(){
+        f0();
+      }
+    }
+
+    val test2: Seq[IO[Seq[Option[String]]]] = hvTest ++ List(
       iotest,
       IO()(UrlUtil.test),
       IO()(CsvParser.test),

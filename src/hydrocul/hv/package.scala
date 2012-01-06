@@ -8,4 +8,10 @@ package object hv {
 
   val EncodingMania = hu.EncodingMania;
 
+  val TestLib = hu.TestLib;
+
+  private[hv] def packageTest: () => Seq[Option[String]] = { () =>
+    Nil;
+  }
+
 }
