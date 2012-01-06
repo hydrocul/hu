@@ -63,11 +63,10 @@ private[http] object UrlInfo {
         new UrlInfo(scheme, None, host, None, path, None);
       case UrlPattern13(scheme, host, path, query) =>
         new UrlInfo(scheme, None, host, None, path, Some(parseQuery(query)));
-      // TODO
+      // TODO ポート番号・認証情報に未対応
       case _ =>
         throw new IllegalArgumentException(url);
     }
-    
   }
 
   /**
@@ -94,24 +93,29 @@ private[http] object UrlInfo {
 
   private[http] def test(): Seq[Option[String]] = {
     import hydrocul.hv.TestLib._;
-    List(
-      assertEquals(UrlInfo("http", None, "www.yahoo.co.jp", None, "", None),
-        apply("http://www.yahoo.co.jp")),
-      assertEquals(UrlInfo("http", None, "www.yahoo.co.jp", None, "/", None),
-        apply("http://www.yahoo.co.jp/")),
-      assertEquals(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-        Some(List(("A", Some("1"))))),
-        apply("http://www.yahoo.co.jp/abc?A=1")),
-      assertEquals(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-        Some(List(("A", Some("1")), ("B", Some("2"))))),
-        apply("http://www.yahoo.co.jp/abc?A=1&B=2")),
-      assertEquals(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-        Some(List(("A", None)))),
-        apply("http://www.yahoo.co.jp/abc?A")),
-      assertEquals(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-        Some(List(("A", Some(""))))),
-        apply("http://www.yahoo.co.jp/abc?A="))
-    );
+    def sub(expected: UrlInfo, url: String): Seq[Option[String]] = {
+      val actual = apply(url);
+      List(
+        assertEquals(expected, actual),
+        assertEquals(url, actual.url)
+      );
+    }
+    sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "", None),
+      "http://www.yahoo.co.jp") ++
+    sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/", None),
+      "http://www.yahoo.co.jp/") ++
+    sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
+      Some(List(("A", Some("1"))))),
+      "http://www.yahoo.co.jp/abc?A=1") ++
+    sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
+      Some(List(("A", Some("1")), ("B", Some("2"))))),
+      "http://www.yahoo.co.jp/abc?A=1&B=2") ++
+    sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
+      Some(List(("A", None)))),
+      "http://www.yahoo.co.jp/abc?A") ++
+    sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
+      Some(List(("A", Some(""))))),
+      "http://www.yahoo.co.jp/abc?A=")
   }
 
 }
