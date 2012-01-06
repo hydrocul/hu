@@ -38,4 +38,14 @@ object CipherUtil {
     key;
   }
 
+  private[hv] def test(): Seq[Option[String]] = {
+    import TestLib._;
+    val a = encodeCipher("abc".getBytes, "あいうえお".getBytes("UTF-8"));
+    val b = new String(decodeCipher("abc".getBytes, a), "UTF-8");
+    List(
+      assertEquals("07b91211306447be8244146ad5d07a03", encodeHex(a)),
+      assertEquals("あいうえお", b)
+    );
+  }
+
 }

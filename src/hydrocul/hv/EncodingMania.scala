@@ -89,4 +89,15 @@ object EncodingMania {
   def decodeCipher(input: Array[Byte], passwd: Array[Byte]): Array[Byte] =
     CipherUtil.decodeCipher(passwd, input);
 
+  private[hv] def test(): Seq[Option[String]] = {
+    import TestLib._;
+    List(
+      assertEquals("97,98,99",
+        thru("abc").mkString(",")),
+      assertEquals("-29,-127,-126,-29,-127,-124,-29,-127,-122",
+        encodeChar("あいう", "UTF-8").mkString(","))
+    );
+    // TODO テストケースが不十分
+  }
+
 }

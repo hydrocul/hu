@@ -3,7 +3,11 @@ package hydrocul.hv;
 object Test {
 
   def test(all: Boolean): Seq[Function0[Seq[Option[String]]]] = {
-    testTest :: testPackage :: Nil;
+    List(
+      testTest,
+      CipherUtil.test,
+      EncodingMania.test
+    )
   }
 
   private def testTest: () => Seq[Option[String]] = { () =>
