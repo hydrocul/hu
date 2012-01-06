@@ -59,7 +59,9 @@ object EvalServer {
 
   private def outputResult(fpath: String, result: String): IO[Unit] = {
     val bin = EncodingMania.encodeChar(result, "UTF-8");
-    File(fpath + ".out.1").write(Some(bin)) then { _ =>
+    {
+      File(fpath + ".out.1").write(Some(bin));
+    } then { _ =>
       File(fpath + ".out.0").write(Some(Array()));
     } then { _ =>
       File(fpath).write(None);
