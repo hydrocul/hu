@@ -10,7 +10,7 @@ object Test {
     )
   }
 
-  private def testTest: () => Seq[Option[String]] = { () =>
+  private def testTest(): Seq[Option[String]] = {
     // hvパッケージでtestが動いていることのテスト
     import TestLib._;
     assertEquals("test", "test") :: Nil;
