@@ -1,5 +1,7 @@
 package hydrocul.hv.http;
 
+import java.{ io => jio }
+
 private[http] trait Response {
 
   def responseHeader: Seq[(String, String)];
@@ -11,5 +13,13 @@ private[http] trait Response {
 
   def location: Option[String] =
     responseHeaderField("Location");
+
+}
+
+private[http] object Response {
+
+  def apply(stream: jio.InputStream): Response = {
+    throw new Exception("// TODO");
+  }
 
 }
