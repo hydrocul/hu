@@ -51,6 +51,26 @@ private[http] case class UrlInfo (
     }
   }
 
+  /**
+   * GETパラメータを追加したUrlInfoを返す。
+   * すでに存在するキーがあれば、上書きする。
+   */
+  def addQueryParams(param: Map[String, String]): UrlInfo = {
+    if(param.isEmpty)
+      return this;
+    val newQuery = param.keySet.toSeq.sorted.foldLeft(query.getOrElse(Nil)){ (seq, key) =>
+      val value = param(key);
+      if(seq.map(_._1).contains(key)){
+        // すでに存在するキーを上書き
+        seq.filter(_._1 != key) :+ (key, Some(value));
+      } else {
+        // キーを追加
+        seq :+ (key, Some(value));
+      }
+    }
+    UrlInfo(scheme, usernameAndPassword, host, port, path, Some(newQuery));
+  }
+
 }
 
 private[http] object UrlInfo {
@@ -93,29 +113,41 @@ private[http] object UrlInfo {
 
   private[http] def test(): Seq[Option[String]] = {
     import hydrocul.hv.TestLib._;
-    def sub(expected: UrlInfo, url: String): Seq[Option[String]] = {
-      val actual = apply(url);
+    { // test UrlInfo.apply, UrlInfo#url
+      def sub(expected: UrlInfo, url: String): Seq[Option[String]] = {
+        val actual = apply(url);
+        List(
+          assertEquals(expected, actual),
+          assertEquals(url, actual.url)
+        );
+      }
+      sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "", None),
+        "http://www.yahoo.co.jp") ++
+      sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/", None),
+        "http://www.yahoo.co.jp/") ++
+      sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
+        Some(List(("A", Some("1"))))),
+        "http://www.yahoo.co.jp/abc?A=1") ++
+      sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
+        Some(List(("A", Some("1")), ("B", Some("2"))))),
+        "http://www.yahoo.co.jp/abc?A=1&B=2") ++
+      sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
+        Some(List(("A", None)))),
+        "http://www.yahoo.co.jp/abc?A") ++
+      sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
+        Some(List(("A", Some(""))))),
+        "http://www.yahoo.co.jp/abc?A=")
+    } ++
+    { // test UrlInfo#addQueryParams
       List(
-        assertEquals(expected, actual),
-        assertEquals(url, actual.url)
+        assertEquals(
+          UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
+            Some(List(("A", Some("")), ("B", Some("2"))))),
+          UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
+            Some(List(("A", Some(""))))).addQueryParams(Map("B" -> "2"))
+        )
       );
     }
-    sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "", None),
-      "http://www.yahoo.co.jp") ++
-    sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/", None),
-      "http://www.yahoo.co.jp/") ++
-    sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-      Some(List(("A", Some("1"))))),
-      "http://www.yahoo.co.jp/abc?A=1") ++
-    sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-      Some(List(("A", Some("1")), ("B", Some("2"))))),
-      "http://www.yahoo.co.jp/abc?A=1&B=2") ++
-    sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-      Some(List(("A", None)))),
-      "http://www.yahoo.co.jp/abc?A") ++
-    sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-      Some(List(("A", Some(""))))),
-      "http://www.yahoo.co.jp/abc?A=")
   }
 
 }
