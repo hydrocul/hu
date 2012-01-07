@@ -145,6 +145,12 @@ private[http] object UrlInfo {
             Some(List(("A", Some("")), ("B", Some("2"))))),
           UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
             Some(List(("A", Some(""))))).addQueryParams(Map("B" -> "2"))
+        ),
+        assertEquals(
+          UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
+            Some(List(("A", Some("2"))))),
+          UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
+            Some(List(("A", Some(""))))).addQueryParams(Map("A" -> "2"))
         )
       );
     }
