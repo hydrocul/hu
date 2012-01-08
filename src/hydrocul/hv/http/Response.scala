@@ -86,7 +86,7 @@ private[http] object Response {
       } else {
         (0 until l).find { i => buf(off + i) == '\n'; } match {
           case Some(i) => // LFが見つかった場合
-            val next2 = next.push(buf, off + i + 1, len - i -1);
+            val next2 = next.push(buf, off + i + 1, l - i -1);
             ((i + 1), true, next2);
           case None => // LFが見つからなかった場合
             (l, false, next);
@@ -124,7 +124,7 @@ private[http] object Response {
     import hydrocul.hv.TestLib._;
 
     {
-      val str = "abc\r\n123\r\n\r\nABC\r\nDEF";
+      val str = "abc\r\n" + "123\r\n" + "\r\n" + "ABC\r\n" + "DEF";
       val inputStream = new jio.ByteArrayInputStream(EncodingMania.encodeChar(str, "ISO-8859-1"));
       val jstream = JStream.fromJava(inputStream);
       val reader1 = new JStreamResponseReader(jstream);
