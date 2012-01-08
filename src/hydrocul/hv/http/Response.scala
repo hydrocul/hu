@@ -39,7 +39,33 @@ private[http] object Response {
       new BufferedResponseReader(buf, off, len, this);
     }
 
-    // def javaInputStream: jio.InputStream;
+    def toJavaInputStream: jio.InputStream = new jio.InputStream {
+
+      private var reader = ResponseReader.this;
+
+      override def read(): Int = {
+        val buf = new Array[Byte](1);
+        val l = read(buf, 0, 1);
+        if(l < 0){
+          -1;
+        } else if(l == 0){
+          read();
+        } else {
+          buf(0);
+        }
+      }
+
+      override def read(buf: Array[Byte], off: Int, len: Int): Int = {
+        val (l, next) = reader.read(buf, off, len);
+        reader = next;
+        l;
+      }
+
+      override def close(){
+        reader.closeIO();
+      }
+
+    }
 
     /**
      * 1行を読み込む。行終端文字を含む。
