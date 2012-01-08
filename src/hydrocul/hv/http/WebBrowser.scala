@@ -13,7 +13,8 @@ object WebBrowser {
 
   private[hv] def test(): Seq[Option[String]] = {
     import hydrocul.hv.TestLib._;
-    UrlInfo.test();
+    UrlInfo.test() ++
+    Response.test();
   }
 
 }
