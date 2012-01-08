@@ -31,11 +31,15 @@ private[http] object Response {
    */
   private trait ResponseReader {
 
-    protected def read(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader);
+    def read(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader);
 
-    protected def push(buf: Array[Byte], off: Int, len: Int): ResponseReader = {
+    def closeIO();
+
+    def push(buf: Array[Byte], off: Int, len: Int): ResponseReader = {
       new BufferedResponseReader(buf, off, len, this);
     }
+
+    // def javaInputStream: jio.InputStream;
 
     /**
      * 1行を読み込む。行終端文字を含む。
@@ -98,9 +102,13 @@ private[http] object Response {
 
   private class JStreamResponseReader(stream: JStream[Byte]) extends ResponseReader {
 
-    protected def read(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader) = {
+    def read(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader) = {
       val (l, next) = stream.read(buf, off, len);
       (l, new JStreamResponseReader(next));
+    }
+
+    def closeIO(){
+      stream.closeIO();
     }
 
   }
@@ -108,7 +116,7 @@ private[http] object Response {
   private class BufferedResponseReader(headBuf: Array[Byte], headOff: Int, headLen: Int,
       tail: ResponseReader) extends ResponseReader {
 
-    protected def read(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader) = {
+    def read(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader) = {
       if(len < headLen){
         System.arraycopy(headBuf, headOff, buf, off, len);
         (len, new BufferedResponseReader(headBuf, headOff + len, headLen - len, tail));
@@ -117,6 +125,8 @@ private[http] object Response {
         (headLen, tail);
       }
     }
+
+    def closeIO() = tail.closeIO();
 
   }
 

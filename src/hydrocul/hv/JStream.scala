@@ -2,7 +2,7 @@ package hydrocul.hv;
 
 import java.{ io => jio }
 
-trait JStream[A] extends jio.Closeable {
+trait JStream[A] {
 
   /**
    * 次のlenサイズを読み込み、その結果と次を読み込むためのJStreamインスタンスを返す。
@@ -14,7 +14,7 @@ trait JStream[A] extends jio.Closeable {
 
   def read(buf: Array[A], off: Int, len: Int): (Int, JStream[A]);
 
-  def close();
+  def closeIO();
 
   def toJavaB(implicit ev: A <:< Byte): jio.InputStream = {
     throw new Exception("// TODO");
@@ -30,7 +30,7 @@ trait JStream[A] extends jio.Closeable {
         t._1;
       }
 
-      override def close() = jstream.close();
+      override def close() = jstream.closeIO();
 
     }
   }
@@ -112,7 +112,7 @@ object JStream {
       }
     }
 
-    def close() = closable.close();
+    def closeIO() = closable.close();
 
   }
 
