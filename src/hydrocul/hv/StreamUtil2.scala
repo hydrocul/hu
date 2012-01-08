@@ -114,7 +114,7 @@ object StreamUtil2 {
       } else {
         System.arraycopy(h, 0, buf, off, len);
         val buf2 = new Array[Byte](h.length - len);
-        System.arraycopy(h, len, buf2, 0, buf2.length);
+        System.arraycopy(h, len, buf2, 0, buf2.length); // TODO 配列のコピーは高コスト
         stream = { () => Stream.cons(buf2, s.tail); }
         len;
       }
@@ -144,7 +144,7 @@ object StreamUtil2 {
       } else {
         System.arraycopy(h, 0, buf, off, len);
         val buf2 = new Array[Char](h.length - len);
-        System.arraycopy(h, len, buf2, 0, buf2.length);
+        System.arraycopy(h, len, buf2, 0, buf2.length); // TODO 配列のコピーは高コスト
         stream = { () => Stream.cons(buf2, s.tail); }
         len;
       }

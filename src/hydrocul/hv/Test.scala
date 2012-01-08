@@ -8,6 +8,7 @@ object Test {
       CipherUtil.test,
       EncodingMania.test,
       Json.test,
+      JStream.test,
       StreamUtil2.test,
       http.WebBrowser.test
     )
