@@ -42,7 +42,7 @@ private[http] object Response {
      * すでにストリームの最後に達していた場合は1つ目の返り値はNone。
      */
     def readLine: (Option[String], ResponseReader) = {
-      val buf = new Array[Byte](16); // TODO 大きな数字にしたほうが効率が良さそう
+      val buf = new Array[Byte](4); // TODO 大きな数字にしたほうが効率が良さそう
       val bo = new jio.ByteArrayOutputStream;
       val (f, next) = readLineSub(bo, buf);
       bo.close();
@@ -124,15 +124,25 @@ private[http] object Response {
     import hydrocul.hv.TestLib._;
 
     {
-      val str = "abcdef\r\n123\r\n\r\nABC\r\nDEF";
+      val str = "abc\r\n123\r\n\r\nABC\r\nDEF";
       val inputStream = new jio.ByteArrayInputStream(EncodingMania.encodeChar(str, "ISO-8859-1"));
       val jstream = JStream.fromJava(inputStream);
       val reader1 = new JStreamResponseReader(jstream);
       val (actual1, reader2) = reader1.readLine;
       val (actual2, reader3) = reader2.readLine;
+      val (actual3, reader4) = reader3.readLine;
+      val (actual4, reader5) = reader4.readLine;
+      val (actual5, reader6) = reader5.readLine;
+      val (actual6, _      ) = reader6.readLine;
       List(
-        assertEquals(Some("abcdef\r\n"), actual1),
-        assertEquals(Some("123\r\n"), actual2)
+        assertEquals(Some("abc\r\n"), actual1),
+        assertEquals(Some("123\r\n"), actual2),
+        assertEquals(Some("\r\n"),    actual3),
+        assertEquals(Some("ABC\r\n"), actual4),
+        assertEquals("4142430d0a",
+          EncodingMania.encodeHex(EncodingMania.encodeChar(actual4.get, "UTF-8"))),
+        assertEquals(Some("DEF"),     actual5),
+        assertEquals(None,            actual6)
       );
     }
 
