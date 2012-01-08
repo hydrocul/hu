@@ -4,6 +4,7 @@ import java.{ io => jio }
 
 import hydrocul.hv.EncodingMania;
 import hydrocul.hv.JStream;
+import hydrocul.util.StreamUtil;
 
 private[http] trait Response {
 
@@ -22,7 +23,35 @@ private[http] trait Response {
 private[http] object Response {
 
   def apply(stream: jio.InputStream): Response = {
-    throw new Exception("// TODO");
+    val (header, reader) = createSub(Nil, new JStreamResponseReader(JStream.fromJava(stream)));
+    val b = StreamUtil.stream2bin(reader.toJavaInputStream);
+    new Response {
+      def responseHeader = header;
+      def body = b;
+    }
+  }
+
+  /**
+   * レスポンスヘッダの全行と本文を取得する。
+   */
+  private def createSub(responseHeader: List[(String, String)], reader: ResponseReader):
+      (Seq[(String, String)], ResponseReader) = {
+    reader.readLine match {
+      case (Some(line), nextReader) =>
+        if(line=="\r\n"){
+          (responseHeader.reverse, nextReader);
+        } else {
+          val p = line.indexOf(':');
+          val (h, v) = if(p < 0){
+            (line.trim, "");
+          } else {
+            (line.substring(0, p).trim, line.substring(p + 1).trim);
+          }
+          createSub((h, v) :: responseHeader, nextReader);
+        }
+      case (None, nextReader) =>
+        (responseHeader.reverse, nextReader);
+    }
   }
 
   /**
