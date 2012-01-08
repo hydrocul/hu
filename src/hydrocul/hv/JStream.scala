@@ -4,7 +4,13 @@ import java.{ io => jio }
 
 trait JStream[A] extends jio.Closeable {
 
-  def read(): Option[(Array[A], JStream[A])];
+  /**
+   * 次のlenサイズを読み込み、その結果と次を読み込むためのJStreamインスタンスを返す。
+   * 返される配列はこのJStreamインスタンス自信がイミュータブルオブジェクトとして
+   * 再利用する可能性があるので、要素を変更してはいけない。
+   * 返される配列はlenを超える可能性も下回る可能性もある。
+   */
+  def read(len: Int): Option[(Array[A], JStream[A])];
 
   def read(buf: Array[A], off: Int, len: Int): (Int, JStream[A]);
 
@@ -36,41 +42,41 @@ object JStream {
   def fromJava(src: jio.InputStream): JStream[Byte] = {
     new JStreamImpl[Byte]({ (buf: Array[Byte], off: Int, len: Int) =>
       src.read(buf, off, len);
-    }, 1024, src);
+    }, src);
   }
 
   def fromJava(src: jio.Reader): JStream[Char] = {
     new JStreamImpl[Char]({ (buf: Array[Char], off: Int, len: Int) =>
       src.read(buf, off, len);
-    }, 1024, src);
+    }, src);
   }
 
   private class JStreamImpl[A](p: (Array[A],Int,Int)=>Int,
-      length: Int, closable: jio.Closeable)(implicit manifest: Manifest[A])
+      closable: jio.Closeable)(implicit manifest: Manifest[A])
       extends JStream[A] {
 
     private var t: Option[Option[(Array[A], Int, Int, JStreamImpl[A])]] = None;
 
-    def read(): Option[(Array[A], JStream[A])] = {
+    def read(len: Int): Option[(Array[A], JStream[A])] = {
       if(t.isDefined && !t.get.isDefined){
         None;
       } else if(t.isDefined){
         val t2 = t.get.get;
         Some((t2._1, t2._4));
       } else {
-        val buf = new Array[A](length);
-        val l = p(buf, 0, length);
+        val buf = new Array[A](len);
+        val l = p(buf, 0, len);
         if(l < 0){
           t = Some(None);
           None;
-        } else if(l >= length){
-          val t2 = (buf, 0, length, new JStreamImpl(p, length, closable));
+        } else if(l >= len){
+          val t2 = (buf, 0, len, new JStreamImpl(p, closable));
           t = Some(Some(t2));
           Some((buf, t2._4));
         } else {
           val b = new Array[A](l);
           System.arraycopy(buf, 0, b, 0, l);
-          val t2 = (b, 0, l, new JStreamImpl(p, length, closable));
+          val t2 = (b, 0, l, new JStreamImpl(p, closable));
           t = Some(Some(t2));
           Some((b, t2._4));
         }
@@ -87,7 +93,7 @@ object JStream {
           (t2._3, t2._4);
         } else {
           System.arraycopy(t2._1, t2._2, buf, off, len);
-          val newStream = new JStreamImpl(p, length, closable);
+          val newStream = new JStreamImpl(p, closable);
           newStream.t = Some(Some((t2._1, t2._2 + len, t2._3 - len, t2._4)));
           (len, newStream);
         }
@@ -99,7 +105,7 @@ object JStream {
         } else {
           val b = new Array[A](l);
           System.arraycopy(buf, off, b, 0, l);
-          val t2 = (b, 0, l, new JStreamImpl(p, length, closable));
+          val t2 = (b, 0, l, new JStreamImpl(p, closable));
           t = Some(Some(t2));
           (l, t2._4);
         }
