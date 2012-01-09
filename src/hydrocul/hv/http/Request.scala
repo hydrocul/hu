@@ -23,7 +23,7 @@ private[http] object Request {
   private def createGetSub(url: UrlInfo, cookie: Map[String, String],
       requestHeader: Seq[(String, String)]): String = {
     "GET " + url.requestPath + " HTTP/1.1\r\n" +
-    createHeaderLines(requestHeader, cookie) +
+    createHeaderLines(url, requestHeader, cookie) +
     "\r\n";
   }
 
@@ -32,8 +32,13 @@ private[http] object Request {
     throw new Exception("// TODO");
   }
 
-  private def createHeaderLines(requestHeader: Seq[(String, String)],
+  private def createHeaderLines(url: UrlInfo, requestHeader: Seq[(String, String)],
       cookie: Map[String, String]): String = {
+    val hostLine = requestHeader.find(_._1 == "Host") match {
+      case Some(_) => "";
+      case None => "Host: " + url.host + "\r\n";
+    }
+    hostLine +
     requestHeader.map { kv =>
       kv._1 + ": " + kv._2 + "\r\n";
     }.mkString;

@@ -5,3 +5,4 @@ trait Page {
   def url: String;
 
 }
+
