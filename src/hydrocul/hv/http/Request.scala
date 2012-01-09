@@ -2,26 +2,26 @@ package hydrocul.hv.http;
 
 import hydrocul.hv.EncodingMania;
 
-private[http] object UtilInternal {
+private[http] object Request {
 
-  def createRequestGet(url: UrlInfo, cookie: Map[String, String],
+  def createGet(url: UrlInfo, cookie: Map[String, String],
       requestHeader: Seq[(String, String)]): Array[Byte] =
     EncodingMania.encodeChar(
-      createRequestGetSub(url, cookie, requestHeader),
+      createGetSub(url, cookie, requestHeader),
       "ISO-8859-1");
 
-  def createRequestPost(url: UrlInfo, postParam: Map[String, String],
+  def createPost(url: UrlInfo, postParam: Map[String, String],
       cookie: Map[String, String], requestHeader: Seq[(String, String)]): Array[Byte] =
     EncodingMania.encodeChar(
-      createRequestPostSub(url, postParam, cookie, requestHeader),
+      createPostSub(url, postParam, cookie, requestHeader),
       "ISO-8859-1");
 
-  private def createRequestGetSub(url: UrlInfo, cookie: Map[String, String],
+  private def createGetSub(url: UrlInfo, cookie: Map[String, String],
       requestHeader: Seq[(String, String)]): String = {
     throw new Exception("// TODO");
   }
 
-  private def createRequestPostSub(url: UrlInfo, postParam: Map[String, String],
+  private def createPostSub(url: UrlInfo, postParam: Map[String, String],
       cookie: Map[String, String], requestHeader: Seq[(String, String)]): String = {
     throw new Exception("// TODO");
   }
@@ -29,9 +29,5 @@ private[http] object UtilInternal {
   val defaultRequestHeader: Seq[(String, String)] = List(
     ("User-Agent", "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)") // IE7
   );
-
-  def parseResponse(response: Array[Byte]): Response = {
-    throw new Exception("// TODO");
-  }
 
 }
