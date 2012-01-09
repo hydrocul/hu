@@ -16,9 +16,14 @@ private[http] object Request {
       createPostSub(url, postParam, cookie, requestHeader),
       "ISO-8859-1");
 
+  val defaultHeader: Seq[(String, String)] = List(
+    ("User-Agent", "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)") // IE7
+  );
+
   private def createGetSub(url: UrlInfo, cookie: Map[String, String],
       requestHeader: Seq[(String, String)]): String = {
-    throw new Exception("// TODO");
+    "GET " + url.requestPath + " HTTP/1.1\r\n" +
+    createHeaderLines(requestHeader, cookie);
   }
 
   private def createPostSub(url: UrlInfo, postParam: Map[String, String],
@@ -26,8 +31,12 @@ private[http] object Request {
     throw new Exception("// TODO");
   }
 
-  val defaultRequestHeader: Seq[(String, String)] = List(
-    ("User-Agent", "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)") // IE7
-  );
+  private def createHeaderLines(requestHeader: Seq[(String, String)],
+      cookie: Map[String, String]): String = {
+    requestHeader.map { kv =>
+      kv._1 + ": " + kv._2 + "\r\n";
+    }.mkString;
+    // TODO cookieの処理
+  }
 
 }
