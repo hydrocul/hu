@@ -8,6 +8,8 @@ import hydrocul.util.StreamUtil;
 
 private[http] trait Response {
 
+  def statusCode: Int;
+
   def responseHeader: Seq[(String, String)];
 
   def body: Array[Byte];
@@ -23,18 +25,39 @@ private[http] trait Response {
 private[http] object Response {
 
   def apply(stream: jio.InputStream): Response = {
-    val (header, reader) = createSub(Nil, new JStreamResponseReader(JStream.fromJava(stream)));
-    val b = StreamUtil.stream2bin(reader.toJavaInputStream);
+    val reader = new JStreamResponseReader(JStream.fromJava(stream));
+    val (code, reader2) = parseStatusLine(reader);
+    val (header, reader3) = parseHeaderLines(Nil, reader2);
+    val b = StreamUtil.stream2bin(reader3.toJavaInputStream);
     new Response {
+      def statusCode = code;
       def responseHeader = header;
       def body = b;
+    }
+  }
+
+  private def parseStatusLine(reader: ResponseReader): (Int, ResponseReader) = {
+    reader.readLine match {
+      case (Some(line), nextReader) =>
+        val a = line.split(" +", 3);
+        if(a.size < 3){
+          throw new Exception("line: %s".format(line));
+        }
+        val code = try {
+          a(1).toInt;
+        } catch { case _ =>
+          throw new Exception("line: %s".format(line));
+        }
+        (code, nextReader);
+      case _ =>
+        throw new Exception();
     }
   }
 
   /**
    * レスポンスヘッダの全行と本文を取得する。
    */
-  private def createSub(responseHeader: List[(String, String)], reader: ResponseReader):
+  private def parseHeaderLines(responseHeader: List[(String, String)], reader: ResponseReader):
       (Seq[(String, String)], ResponseReader) = {
     reader.readLine match {
       case (Some(line), nextReader) =>
@@ -47,7 +70,7 @@ private[http] object Response {
           } else {
             (line.substring(0, p).trim, line.substring(p + 1).trim);
           }
-          createSub((h, v) :: responseHeader, nextReader);
+          parseHeaderLines((h, v) :: responseHeader, nextReader);
         }
       case (None, nextReader) =>
         (responseHeader.reverse, nextReader);
