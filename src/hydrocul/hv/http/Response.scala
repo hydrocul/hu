@@ -20,11 +20,29 @@ private[http] trait Response {
   def location: Option[String] =
     responseHeaderField("Location");
 
-  def contentType: Option[String] =
+  def contentTypeField: Option[String] =
     responseHeaderField("Content-Type");
 
+  private lazy val _contentTypeField = {
+    contentTypeField match {
+      case Response.ContentTypePattern(t, cs) =>
+        Some((t.trim, cs.trim));
+      case _ =>
+        None;
+    }
+  }
+
+  def contentType: Option[String] =
+    _contentTypeField.map(_._1);
+
+  def charset: Option[String] =
+    _contentTypeField.map(_._2);
+
   def toStringDigest: String = {
-    "StatusCode: " + statusCode + "\n";
+    "StatusCode: " + statusCode + "\n"
+    location.map("Location: " + _ + "\n").getOrElse("") +
+    contentType.map("ContentType: " + _ + "\n").getOrElse("") +
+    charset.map("Charset: " + _ + "\n").getOrElse("");
   }
 
 }
@@ -214,6 +232,8 @@ private[http] object Response {
     def closeIO() = tail.closeIO();
 
   }
+
+  private val ContentTypePattern = "([^;]+);(.+)".r;
 
   private[http] def test(): Seq[Option[String]] = {
     import hydrocul.hv.TestLib._;
