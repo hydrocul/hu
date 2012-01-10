@@ -20,6 +20,13 @@ private[http] trait Response {
   def location: Option[String] =
     responseHeaderField("Location");
 
+  def contentType: Option[String] =
+    responseHeaderField("Content-Type");
+
+  def toStringDigest: String = {
+    "StatusCode: " + statusCode + "\n";
+  }
+
 }
 
 private[http] object Response {

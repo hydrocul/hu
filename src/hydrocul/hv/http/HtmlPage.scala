@@ -1,11 +1,7 @@
 package hydrocul.hv.http;
 
-abstract // TODO
-class HtmlPage extends Page {
-
-  def url: String;
+class HtmlPage private[http] (response: Response, url: String)
+    extends Page(response, url) {
 
 }
 
-object HtmlPage {
-}
