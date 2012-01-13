@@ -5,7 +5,12 @@ class WebBrowser {
   def doGetIO(url: String): Page = {
     val urlInfo = UrlInfo(url);
     val response = Sockets.doGetIO(urlInfo.host, urlInfo, Map.empty, Request.defaultHeader);
-    new BinaryPage(response, url);
+    response.contentType match {
+      case Some("text/html") =>
+        new HtmlPage(response, url);
+      case _ =>
+        new BinaryPage(response, url);
+    }
   }
 
   // def doPostIO(url: UrlInfo, postParam: Map[String, String]): Page;

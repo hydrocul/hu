@@ -6,7 +6,7 @@ import hydrocul.hv.EncodingMania;
 import hydrocul.hv.JStream;
 import hydrocul.util.StreamUtil;
 
-private[http] trait Response {
+trait Response {
 
   def statusCode: Int;
 
@@ -25,7 +25,7 @@ private[http] trait Response {
 
   private lazy val _contentTypeField = {
     contentTypeField match {
-      case Response.ContentTypePattern(t, cs) =>
+      case Some(Response.ContentTypePattern(t, cs)) =>
         Some((t.trim, cs.trim));
       case _ =>
         None;
@@ -233,7 +233,7 @@ private[http] object Response {
 
   }
 
-  private val ContentTypePattern = "([^;]+);(.+)".r;
+  private val ContentTypePattern = "([^;]+); *charset=(.+)".r;
 
   private[http] def test(): Seq[Option[String]] = {
     import hydrocul.hv.TestLib._;

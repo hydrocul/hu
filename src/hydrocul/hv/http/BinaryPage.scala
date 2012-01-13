@@ -1,7 +1,7 @@
 package hydrocul.hv.http;
 
 class BinaryPage private[http] (_response: Response, _url: String)
-    extends Page(response, url) {
+    extends Page(_response, _url) {
 
   def bin: Array[Byte] = response.body;
 
