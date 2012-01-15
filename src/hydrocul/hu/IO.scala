@@ -118,7 +118,7 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
 
   def toUnit(implicit ev: A <:< Seq[Unit]): IO[Unit] = map(_ => ());
 
-  def exec(): A = {
+  def exec(){
     val a = new Object();
     @volatile var ret: Any = null;
     @volatile var f = false;
@@ -142,7 +142,7 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
         a.wait();
       }
     }
-    ret.asInstanceOf[A];
+    // ret.asInstanceOf[A];
   }
 
   def get(): A = {
