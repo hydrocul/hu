@@ -497,6 +497,7 @@ object IO {
   private[hydrocul] def test(all: Boolean){
 
     val (success, failed) = execTest(all);
+
     if(failed > 0){
       println("Failed: %d / %d".format(success, success + failed));
       sys.exit(1);
@@ -505,25 +506,6 @@ object IO {
       sys.exit(0);
     }
 
-/*
-    createTestIO(all).task { r: Either[Throwable, (Int, Int)] =>
-      r match {
-        case Right(r) =>
-          val success = r._1;
-          val failed = r._2;
-          if(failed > 0){
-            println("Failed: %d / %d".format(success, success + failed));
-            sys.exit(1);
-          } else {
-            println("Success: %d / %d".format(success, success + failed));
-            sys.exit(0);
-          }
-        case Left(e) =>
-          e.printStackTrace();
-          sys.exit(1);
-      }
-    }
-*/
   }
 
   private val taskEngine = new taskmanager.TaskEngine;
