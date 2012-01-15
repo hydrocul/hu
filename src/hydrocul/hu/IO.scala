@@ -490,11 +490,11 @@ object IO {
 
   }
 
-  private def execTest(all: Boolean): (Int, Int) = {
+  private[hydrocul] def execTest(all: Boolean): (Int, Int) = {
     createTestIO(all).get;
   }
 
-  private def test(all: Boolean){
+  private[hydrocul] def test(all: Boolean){
 
     val (success, failed) = execTest(all);
     if(failed > 0){
@@ -506,7 +506,7 @@ object IO {
     }
 
 /*
-    testSub(all).task { r: Either[Throwable, (Int, Int)] =>
+    createTestIO(all).task { r: Either[Throwable, (Int, Int)] =>
       r match {
         case Right(r) =>
           val success = r._1;
