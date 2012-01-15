@@ -10,13 +10,15 @@ trait XmlElement {
 
   def select(query: String): XmlElements;
 
+  def outerHtml: String;
+
   def html: String;
 
   def text: String;
 
   def attr(name: String): String;
 
-  override def toString(): String = html;
+  override def toString(): String = outerHtml;
 
 }
 
@@ -38,6 +40,8 @@ private[hv] class XmlElementImpl(val elem: jsoup.nodes.Element) extends XmlEleme
   def select(query: String): XmlElements = {
     new XmlElementsImpl(elem.select(query));
   }
+
+  def outerHtml: String = elem.outerHtml;
 
   def html: String = elem.html;
 

@@ -2,6 +2,7 @@ package hydrocul.hv.http;
 
 import java.{ io => jio }
 
+import hydrocul.hv.XmlElement;
 import hydrocul.util.HtmlInputStreamReader;
 import hydrocul.util.StreamUtil;
 
@@ -26,6 +27,8 @@ class HtmlPage private[http] (_response: Response, _url: String)
           new jio.ByteArrayInputStream(response.body));
     }
   }
+
+  def element: XmlElement = XmlElement.parseHtml(_source);
 
 }
 
