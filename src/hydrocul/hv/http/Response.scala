@@ -110,7 +110,7 @@ private[http] object Response {
 
     def read(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader);
 
-    def closeIO();
+    def close();
 
     def push(buf: Array[Byte], off: Int, len: Int): ResponseReader = {
       new BufferedResponseReader(buf, off, len, this);
@@ -139,7 +139,7 @@ private[http] object Response {
       }
 
       override def close(){
-        reader.closeIO();
+        reader.close();
       }
 
     }
@@ -210,8 +210,8 @@ private[http] object Response {
       (l, new JStreamResponseReader(next));
     }
 
-    def closeIO(){
-      stream.closeIO();
+    def close(){
+      stream.close();
     }
 
   }
@@ -229,7 +229,7 @@ private[http] object Response {
       }
     }
 
-    def closeIO() = tail.closeIO();
+    def close() = tail.close();
 
   }
 

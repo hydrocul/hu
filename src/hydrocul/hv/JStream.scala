@@ -14,7 +14,7 @@ trait JStream[A] {
 
   def read(buf: Array[A], off: Int, len: Int): (Int, JStream[A]);
 
-  def closeIO();
+  def close();
 
   def toJavaB(implicit ev: A <:< Byte): jio.InputStream = {
     throw new Exception("// TODO");
@@ -30,7 +30,7 @@ trait JStream[A] {
         t._1;
       }
 
-      override def close() = jstream.closeIO();
+      override def close() = jstream.close();
 
     }
   }
@@ -112,7 +112,7 @@ object JStream {
       }
     }
 
-    def closeIO() = closable.close();
+    def close() = closable.close();
 
   }
 

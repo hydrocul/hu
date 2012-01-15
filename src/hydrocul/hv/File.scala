@@ -6,15 +6,15 @@ import hydrocul.util.FileUtil;
 
 trait File {
 
-  def readIO: Option[Array[Byte]];
+  def read: Option[Array[Byte]];
 
-  def writeIO(bin: Option[Array[Byte]]);
+  def write(bin: Option[Array[Byte]]);
 
-  def isDirectoryIO: Boolean;
+  def isDirectory: Boolean;
 
-  def existsIO: Boolean;
+  def exists: Boolean;
 
-  def listIO: Map[String, File];
+  def list: Map[String, File];
 
   def getByName(name: String): Option[File];
 
@@ -30,8 +30,8 @@ object File {
 
   private case class FileImpl(file: jio.File, traversalEnable: Boolean) extends File {
 
-    override def readIO: Option[Array[Byte]] = {
-      def subIO(f: jio.File): Array[Byte] = {
+    override def read: Option[Array[Byte]] = {
+      def sub(f: jio.File): Array[Byte] = {
         // ファイルから読み取る
         val p = new jio.BufferedInputStream(new jio.FileInputStream(f));
         val bop = new jio.ByteArrayOutputStream;
@@ -50,15 +50,15 @@ object File {
         } else {
           // 一時ファイルがあった場合はそれをリネームして読み取る
           tmpFile.renameTo(file);
-          Some(subIO(file));
+          Some(sub(file));
         }
       } else {
         // ファイルがある場合は、そのファイルを読み取る
-        Some(subIO(file));
+        Some(sub(file));
       }
     }
 
-    override def writeIO(bin: Option[Array[Byte]]){
+    override def write(bin: Option[Array[Byte]]){
       bin match {
         case Some(bin) =>
           val parent = file.getParentFile;
@@ -91,11 +91,11 @@ object File {
       }
     }
 
-    override def isDirectoryIO: Boolean = file.isDirectory;
+    override def isDirectory: Boolean = file.isDirectory;
 
-    override def existsIO: Boolean = file.exists;
+    override def exists: Boolean = file.exists;
 
-    override def listIO: Map[String, File] = {
+    override def list: Map[String, File] = {
       val list = file.listFiles;
       if(list == null){
         Map.empty;

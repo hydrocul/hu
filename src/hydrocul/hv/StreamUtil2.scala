@@ -13,7 +13,7 @@ object StreamUtil2 {
 
   private def streamJava2ScalaSub(src: jio.InputStream, buflen: Int):
       (()=>Stream[Array[Byte]], jio.Closeable) =
-    (ByteJavaStream(src, new Array[Byte](buflen)).toScalaStreamIO, src);
+    (ByteJavaStream(src, new Array[Byte](buflen)).toScalaStream, src);
 
   /**
    * Javaの Reader をScalaの Stream に変換する。
@@ -24,18 +24,18 @@ object StreamUtil2 {
 
   private def streamJava2ScalaSub(src: jio.Reader, buflen: Int):
       (()=>Stream[Array[Char]], jio.Closeable) =
-    (CharJavaStream(src, new Array[Char](buflen)).toScalaStreamIO, src);
+    (CharJavaStream(src, new Array[Char](buflen)).toScalaStream, src);
 
   private trait JavaStream[A] {
 
-    protected def readIO(): Option[(Array[A], JavaStream[A])];
+    protected def read(): Option[(Array[A], JavaStream[A])];
 
-    private lazy val stream: Option[(Array[A], JavaStream[A])] = readIO();
+    private lazy val stream: Option[(Array[A], JavaStream[A])] = read();
 
-    def toScalaStreamIO: ()=>Stream[Array[A]] = { () =>
+    def toScalaStream: ()=>Stream[Array[A]] = { () =>
       stream match {
         case Some((bin, nextStream)) =>
-          Stream.cons(bin, nextStream.toScalaStreamIO());
+          Stream.cons(bin, nextStream.toScalaStream());
         case None =>
           Stream.empty;
       }
@@ -45,7 +45,7 @@ object StreamUtil2 {
 
   private def ByteJavaStream(src: jio.InputStream, buf: Array[Byte]): JavaStream[Byte] =
       new JavaStream[Byte]{
-    override protected def readIO(): Option[(Array[Byte], JavaStream[Byte])] = {
+    override protected def read(): Option[(Array[Byte], JavaStream[Byte])] = {
       val len = src.read(buf);
       if(len < 0){
         src.close();
@@ -60,7 +60,7 @@ object StreamUtil2 {
 
   private def CharJavaStream(src: jio.Reader, buf: Array[Char]): JavaStream[Char] =
       new JavaStream[Char]{
-    override protected def readIO(): Option[(Array[Char], JavaStream[Char])] = {
+    override protected def read(): Option[(Array[Char], JavaStream[Char])] = {
       val len = src.read(buf);
       if(len < 0){
         src.close();

@@ -2,9 +2,9 @@ package hydrocul.hv.http;
 
 class WebBrowser private () {
 
-  def doGetIO(url: String): Page = {
+  def doGet(url: String): Page = {
     val urlInfo = UrlInfo(url);
-    val response = Sockets.doGetIO(urlInfo.host, urlInfo, Map.empty, Request.defaultHeader);
+    val response = Sockets.doGet(urlInfo.host, urlInfo, Map.empty, Request.defaultHeader);
     response.contentType match {
       case Some("text/html") =>
         new HtmlPage(response, url);
@@ -13,7 +13,7 @@ class WebBrowser private () {
     }
   }
 
-  // def doPostIO(url: UrlInfo, postParam: Map[String, String]): Page;
+  // def doPost(url: UrlInfo, postParam: Map[String, String]): Page;
 
 }
 
@@ -34,7 +34,7 @@ object WebBrowser {
     import hydrocul.hv.TestLib._;
     ("http.Webbrowser", { () =>
       val browser = WebBrowser.create();
-      val page = browser.doGetIO("http://www.yahoo.co.jp/");
+      val page = browser.doGet("http://www.yahoo.co.jp/");
       List(
         assertEquals(true, page.isInstanceOf[HtmlPage]),
         assertEquals("Yahoo! JAPAN", page.asInstanceOf[HtmlPage].select("title")(0).text)

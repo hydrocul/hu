@@ -6,7 +6,7 @@ import java.net.Socket;
 
 private[http] object Sockets {
 
-  def doGetIO(host: String, url: UrlInfo, cookie: Map[String, String],
+  def doGet(host: String, url: UrlInfo, cookie: Map[String, String],
       requestHeader: Seq[(String, String)]): Response = {
 
     val requestBin = Request.createGet(url, cookie, requestHeader);
