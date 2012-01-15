@@ -28,7 +28,7 @@ class HtmlPage private[http] (_response: Response, _url: String)
     }
   }
 
-  def element: XmlElement = XmlElement.parseHtml(_source);
+  def element: HtmlElement = HtmlElementImpl.create(XmlElement.parseHtml(_source));
 
 }
 

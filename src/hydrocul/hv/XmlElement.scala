@@ -5,6 +5,7 @@ import scala.collection.mutable.Builder;
 import scala.collection.mutable.LazyBuilder
 
 import org.jsoup;
+  // http://jsoup.org/apidocs/
 
 trait XmlElement {
 
