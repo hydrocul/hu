@@ -141,6 +141,26 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
     ret.asInstanceOf[A];
   }
 
+  def get(): A = {
+    val a = new Object();
+    @volatile var ret: Either[Throwable, Any] = null;
+    task { r =>
+      ret = r;
+      a.synchronized {
+        a.notifyAll();
+      }
+    }
+    a.synchronized {
+      a.wait();
+    }
+    ret match {
+      case Right(a) =>
+        a.asInstanceOf[A];
+      case Left(e) =>
+       throw e;
+    }
+  }
+
 }
 
 object IO {
@@ -435,7 +455,7 @@ object IO {
     } yield r1 ++ r2 ++ r3 ++ r4 ++ r5 ++ r6;
   }
 
-  private def test(all: Boolean){
+  private def createTestIO(all: Boolean): IO[(Int, Int)] = {
 
     val hvTest: Seq[IO[Seq[Option[String]]]] = hydrocul.hv.Test.test(all).map { f0 =>
       IO(){
@@ -464,11 +484,33 @@ object IO {
       }
     }
 
-    parallel(test3.toIndexedSeq).task { r: Either[Throwable, IndexedSeq[(Int, Int)]] =>
+    parallel(test3.toIndexedSeq).map { r =>
+      (r.map(_._1).sum, r.map(_._2).sum);
+    }
+
+  }
+
+  private def execTest(all: Boolean): (Int, Int) = {
+    createTestIO(all).get;
+  }
+
+  private def test(all: Boolean){
+
+    val (success, failed) = execTest(all);
+    if(failed > 0){
+      println("Failed: %d / %d".format(success, success + failed));
+      sys.exit(1);
+    } else {
+      println("Success: %d / %d".format(success, success + failed));
+      sys.exit(0);
+    }
+
+/*
+    testSub(all).task { r: Either[Throwable, (Int, Int)] =>
       r match {
         case Right(r) =>
-          val success = r.map(_._1).sum;
-          val failed = r.map(_._2).sum;
+          val success = r._1;
+          val failed = r._2;
           if(failed > 0){
             println("Failed: %d / %d".format(success, success + failed));
             sys.exit(1);
@@ -481,7 +523,7 @@ object IO {
           sys.exit(1);
       }
     }
-
+*/
   }
 
   private val taskEngine = new taskmanager.TaskEngine;
