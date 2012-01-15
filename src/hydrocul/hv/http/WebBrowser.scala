@@ -1,6 +1,6 @@
 package hydrocul.hv.http;
 
-class WebBrowser {
+class WebBrowser private () {
 
   def doGetIO(url: String): Page = {
     val urlInfo = UrlInfo(url);
@@ -19,6 +19,8 @@ class WebBrowser {
 
 object WebBrowser {
 
+  def create(): WebBrowser = new WebBrowser();
+
   private[hv] def test(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
     import hydrocul.hv.TestLib._;
     testSub(all) ++
@@ -31,7 +33,7 @@ object WebBrowser {
   private def testSub(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
     import hydrocul.hv.TestLib._;
     ("http.Webbrowser", { () =>
-      val browser = new WebBrowser;
+      val browser = WebBrowser.create();
       val page = browser.doGetIO("http://www.yahoo.co.jp/");
       List(
         assertEquals(true, page.isInstanceOf[HtmlPage]),
