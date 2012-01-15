@@ -19,10 +19,25 @@ class WebBrowser {
 
 object WebBrowser {
 
-  private[hv] def test(): Seq[Option[String]] = {
+  private[hv] def test(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
     import hydrocul.hv.TestLib._;
-    UrlInfo.test() ++
-    Response.test();
+    testSub(all) ++
+    List[(String, Function0[Seq[Option[String]]])](
+      ("http.UrlInfo", UrlInfo.test),
+      ("http.Response", Response.test)
+    );
+  }
+
+  private def testSub(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
+    import hydrocul.hv.TestLib._;
+    ("http.Webbrowser", { () =>
+      val browser = new WebBrowser;
+      val page = browser.doGetIO("http://www.yahoo.co.jp/");
+      List(
+        assertEquals(true, page.isInstanceOf[HtmlPage]),
+        assertEquals("Yahoo! JAPAN", page.asInstanceOf[HtmlPage].element.select("title")(0).text)
+      );
+    }) :: Nil;
   }
 
 }

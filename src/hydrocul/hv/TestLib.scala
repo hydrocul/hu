@@ -4,6 +4,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.regex.Pattern;
 
+import hydrocul.util.StreamUtil;
+
 object TestLib {
 
   def assertTrue(actual: Boolean): Option[String] = {
@@ -37,10 +39,7 @@ object TestLib {
   }
 
   private def getStackTrace(level: Int): String = {
-    val sw = new StringWriter();
-    val pw = new PrintWriter(sw);
-    (new AssertionError()).printStackTrace(pw);
-    sw.toString.split("\n")(level).trim;
+    StreamUtil.exception2stackTrace(new AssertionError).split("\n")(level).trim;
   }
 
 }

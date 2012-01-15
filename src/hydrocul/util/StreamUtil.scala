@@ -40,4 +40,12 @@ object StreamUtil {
     bop.toByteArray;
   }
 
+  def exception2stackTrace(exception: Throwable): String = {
+    val sw = new jio.StringWriter();
+    val pw = new jio.PrintWriter(sw);
+    exception.printStackTrace(pw);
+    pw.close();
+    sw.toString;
+  }
+
 }

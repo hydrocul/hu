@@ -1,5 +1,7 @@
 package hydrocul.hv;
 
+import hydrocul.util.StreamUtil;
+
 object Test {
 
   def main(args: Array[String]){
@@ -19,12 +21,16 @@ object Test {
 
   private def doTest(all: Boolean){
     val result: Seq[(Int, Int)] = testTask(all).par.map { t =>
-      val result: Seq[Option[String]] = t._2.apply();
+      val result: Seq[Option[String]] = try {
+        t._2.apply();
+      } catch { case e =>
+        Some(StreamUtil.exception2stackTrace(e).trim) :: Nil;
+      }
       val failed = result.filter(_.isDefined).size;
       val success = result.size - failed;
       val resultMsg = "%d / %d: %s".format(success, success + failed, t._1) + (
         result.map {
-          case Some(failedMsg) => failedMsg + "\n";
+          case Some(failedMsg) => "\n" + failedMsg;
           case _ => "";
         }.mkString("")
       );
@@ -50,15 +56,15 @@ object Test {
   }
 
   def test(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
-    List(
+    http.WebBrowser.test(all) ++
+    List[(String, Function0[Seq[Option[String]]])](
       ("Test", testTest),
       ("CipherUtil", CipherUtil.test),
       ("EncodingMania", EncodingMania.test),
       ("Json", Json.test),
       ("JStream", JStream.test),
-      ("StreamUtil2", StreamUtil2.test),
-      ("http", http.WebBrowser.test)
-    )
+      ("StreamUtil2", StreamUtil2.test)
+    );
   }
 
   private def testTest(): Seq[Option[String]] = {
