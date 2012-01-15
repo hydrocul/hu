@@ -19,11 +19,10 @@ object Test {
 
   private def doTest(all: Boolean){
     val result: Seq[(Int, Int)] = testTask(all).par.map { t =>
-      println("start %s".format(t._1));
       val result: Seq[Option[String]] = t._2.apply();
       val failed = result.filter(_.isDefined).size;
       val success = result.size - failed;
-      val resultMsg = "%s %d / %d".format(t._1, success, success + failed) + (
+      val resultMsg = "%d / %d: %s".format(success, success + failed, t._1) + (
         result.map {
           case Some(failedMsg) => failedMsg + "\n";
           case _ => "";
@@ -44,20 +43,21 @@ object Test {
   }
 
   private def testTask(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
-    val huTest = hydrocul.hu.IO.createTestFunc(all);
-    (0 until huTest.size).map(i => ("hu.IO (%d)".format(i + 1), huTest(i))) ++
-    Nil;
+    {
+      val huTest = hydrocul.hu.IO.createTestFunc(all);
+      (0 until huTest.size).map(i => ("hu.IO (%d)".format(i + 1), huTest(i)));
+    } ++ test(all);
   }
 
-  def test(all: Boolean): Seq[Function0[Seq[Option[String]]]] = {
+  def test(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
     List(
-      testTest,
-      CipherUtil.test,
-      EncodingMania.test,
-      Json.test,
-      JStream.test,
-      StreamUtil2.test,
-      http.WebBrowser.test
+      ("Test", testTest),
+      ("CipherUtil", CipherUtil.test),
+      ("EncodingMania", EncodingMania.test),
+      ("Json", Json.test),
+      ("JStream", JStream.test),
+      ("StreamUtil2", StreamUtil2.test),
+      ("http", http.WebBrowser.test)
     )
   }
 

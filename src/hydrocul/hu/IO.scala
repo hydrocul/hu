@@ -462,22 +462,12 @@ object IO {
   }
 
   private def createTestIO(all: Boolean): Seq[IO[Seq[Option[String]]]] = {
-
-    val hvTest: Seq[IO[Seq[Option[String]]]] = hydrocul.hv.Test.test(all).map { f0 =>
-      IO(){
-        f0();
-      }
-    }
-
-    val test2: Seq[IO[Seq[Option[String]]]] = hvTest ++ List(
+    List(
       iotest,
       IO()(UrlUtil.test),
       IO()(CsvParser.test),
       jdbc.Jdbc.test
     );
-
-    test2;
-
   }
 
   private[hydrocul] def createTestFunc(all: Boolean): Seq[Function0[Seq[Option[String]]]] = {
