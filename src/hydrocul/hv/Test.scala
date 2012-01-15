@@ -9,26 +9,27 @@ object Test {
   private def main(args: List[String]){
     args match {
       case "test" :: "all" :: Nil =>
-        test(true);
+        doTest(true);
       case "test" :: Nil =>
-        test(false);
+        doTest(false);
       case _ =>
         throw new IllegalArgumentException();
     }
   }
 
-  private def doTest(){
-    val result: Seq[(Int, Int)] = testTask.par.map { t =>
+  private def doTest(all: Boolean){
+    val result: Seq[(Int, Int)] = testTask(all).par.map { t =>
+      println("start %s".format(t._1));
       val result: Seq[Option[String]] = t._2.apply();
       val failed = result.filter(_.isDefined).size;
       val success = result.size - failed;
-      val msg = "%s %d / %d".format(t._1, success, success + failed) + (
+      val resultMsg = "%s %d / %d".format(t._1, success, success + failed) + (
         result.map {
-          case Some(failedMsg) => failedMsg;
+          case Some(failedMsg) => failedMsg + "\n";
           case _ => "";
-        }.mkString("\n")
+        }.mkString("")
       );
-      println(msg);
+      println(resultMsg);
       (success, failed);
     }.seq;
     val success = result.map(_._1).sum;
@@ -42,7 +43,9 @@ object Test {
     }
   }
 
-  private def testTask: Seq[(String, Function0[Seq[Option[String]]])] = {
+  private def testTask(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
+    val huTest = hydrocul.hu.IO.createTestFunc(all);
+    (0 until huTest.size).map(i => ("hu.IO (%d)".format(i + 1), huTest(i))) ++
     Nil;
   }
 

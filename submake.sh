@@ -2,7 +2,8 @@
 
 JARNAME=hu.jar
 JARNAME2=hu-min.jar
-MAINCLASSNAME=hydrocul.hu.IO
+#MAINCLASSNAME=hydrocul.hu.IO
+MAINCLASSNAME=hydrocul.hv.Test
 
 buildlib_todo()
 {

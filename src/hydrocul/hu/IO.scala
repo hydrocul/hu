@@ -121,22 +121,26 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
   def exec(): A = {
     val a = new Object();
     @volatile var ret: Any = null;
+    @volatile var f = false;
     task { r =>
       r match {
         case Right(r) =>
           if(!r.isInstanceOf[Unit]){
             println(r);
-            ret = r;
           }
+          ret = r;
         case Left(e) =>
           e.printStackTrace();
       }
       a.synchronized {
+        f = true;
         a.notifyAll();
       }
     }
     a.synchronized {
-      a.wait();
+      if(!f){
+        a.wait();
+      }
     }
     ret.asInstanceOf[A];
   }
@@ -145,13 +149,15 @@ final class IO[+A] private (private val task: (Either[Throwable, A] => Unit) => 
     val a = new Object();
     @volatile var ret: Either[Throwable, Any] = null;
     task { r =>
-      ret = r;
       a.synchronized {
+        ret = r;
         a.notifyAll();
       }
     }
     a.synchronized {
-      a.wait();
+      if(ret == null){
+        a.wait();
+      }
     }
     ret match {
       case Right(a) =>
@@ -455,7 +461,7 @@ object IO {
     } yield r1 ++ r2 ++ r3 ++ r4 ++ r5 ++ r6;
   }
 
-  private def createTestIO(all: Boolean): IO[(Int, Int)] = {
+  private def createTestIO(all: Boolean): Seq[IO[Seq[Option[String]]]] = {
 
     val hvTest: Seq[IO[Seq[Option[String]]]] = hydrocul.hv.Test.test(all).map { f0 =>
       IO(){
@@ -469,6 +475,20 @@ object IO {
       IO()(CsvParser.test),
       jdbc.Jdbc.test
     );
+
+    test2;
+
+  }
+
+  private[hydrocul] def createTestFunc(all: Boolean): Seq[Function0[Seq[Option[String]]]] = {
+    createTestIO(all).map { io =>
+      () => io.get;
+    }
+  }
+
+  private def testSub(all: Boolean): IO[(Int, Int)] = {
+
+    val test2: Seq[IO[Seq[Option[String]]]] = createTestIO(all);
 
     val sync = new taskmanager.Synchronizer;
 
@@ -490,13 +510,9 @@ object IO {
 
   }
 
-  private[hydrocul] def execTest(all: Boolean): (Int, Int) = {
-    createTestIO(all).get;
-  }
+  private def test(all: Boolean){
 
-  private[hydrocul] def test(all: Boolean){
-
-    val (success, failed) = execTest(all);
+    val (success, failed) = testSub(all).get();
 
     if(failed > 0){
       println("Failed: %d / %d".format(success, success + failed));
