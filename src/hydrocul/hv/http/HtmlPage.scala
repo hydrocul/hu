@@ -7,7 +7,7 @@ import hydrocul.util.HtmlInputStreamReader;
 import hydrocul.util.StreamUtil;
 
 class HtmlPage private[http] (_response: Response, _url: String)
-    extends Page(_response, _url) {
+    extends Page(_response, _url) with HtmlElement {
 
   private lazy val _source: String =
     StreamUtil.stream2bin(inputStreamReader);
@@ -28,7 +28,17 @@ class HtmlPage private[http] (_response: Response, _url: String)
     }
   }
 
-  def element: HtmlElement = HtmlElementImpl.create(XmlElement.parseHtml(_source));
+  private def element: HtmlElement = HtmlElementImpl.create(XmlElement.parseHtml(_source));
+
+  def select(query: String): IndexedSeq[HtmlElement] = element.select(query);
+
+  def outerHtml: String = element.outerHtml;
+
+  def html: String = element.html;
+
+  def text: String = element.text;
+
+  def attr(name: String): String = element.attr(name);
 
 }
 

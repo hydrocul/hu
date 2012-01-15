@@ -37,7 +37,7 @@ object WebBrowser {
       val page = browser.doGetIO("http://www.yahoo.co.jp/");
       List(
         assertEquals(true, page.isInstanceOf[HtmlPage]),
-        assertEquals("Yahoo! JAPAN", page.asInstanceOf[HtmlPage].element.select("title")(0).text)
+        assertEquals("Yahoo! JAPAN", page.asInstanceOf[HtmlPage].select("title")(0).text)
       );
     }) :: Nil;
   }
