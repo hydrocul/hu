@@ -23,10 +23,12 @@ trait Response {
   def contentTypeField: Option[String] =
     responseHeaderField("Content-Type");
 
-  private lazy val _contentTypeField = {
+  private lazy val _contentTypeField: Option[(String, Option[String])] = {
     contentTypeField match {
       case Some(Response.ContentTypePattern(t, cs)) =>
-        Some((t.trim, cs.trim));
+        Some((t.trim, Some(cs.trim)));
+      case Some(t) =>
+        Some((t.trim, None));
       case _ =>
         None;
     }
@@ -36,7 +38,7 @@ trait Response {
     _contentTypeField.map(_._1);
 
   def charset: Option[String] =
-    _contentTypeField.map(_._2);
+    _contentTypeField.flatMap(_._2);
 
   def toStringDigest: String = {
     "StatusCode: " + statusCode + "\n"
