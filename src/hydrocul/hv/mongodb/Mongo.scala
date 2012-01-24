@@ -30,8 +30,10 @@ object Mongo {
       asInstanceOf[Map[String, DBObject]]("a").toJava; // 1.0
     val count3 = collection.filterEq("b", "ABC").iterator.toSeq.size; // 0
     val count4 = collection.filterLt("_id", 3).iterator.toSeq.size; // 2
+    val count5 = collection.filterLe("_id", 3).iterator.toSeq.size; // 3
+    val count6 = collection.filterLe("_id", 3).filterGe("_id", 2).iterator.toSeq.size; // 2
     collection.remove();
-    val count5 = collection.iterator().toSeq.size; // 0
+    val count7 = collection.iterator().toSeq.size; // 0
     List(
       assertEquals(0, count0),
       assertEquals(1, count1),
@@ -39,7 +41,9 @@ object Mongo {
       assertEquals(1.0, value1),
       assertEquals(0, count3),
       assertEquals(2, count4),
-      assertEquals(0, count5)
+      assertEquals(3, count5),
+      assertEquals(2, count6),
+      assertEquals(0, count7)
     );
   }
 

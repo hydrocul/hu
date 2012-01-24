@@ -14,6 +14,12 @@ trait Collection {
 
   def filterLt(key: String, value: DBObject): Collection;
 
+  def filterLe(key: String, value: DBObject): Collection;
+
+  def filterGt(key: String, value: DBObject): Collection;
+
+  def filterGe(key: String, value: DBObject): Collection;
+
 }
 
 private[mongodb] class CollectionImpl(collection: m.DBCollection,
@@ -38,14 +44,43 @@ private[mongodb] class CollectionImpl(collection: m.DBCollection,
   }
 
   def filterEq(key: String, value: DBObject): CollectionImpl = {
-    if(ref.value.contains(key)){
-      throw new IllegalArgumentException(key);
+    val newRef = (ref.value.get(key), value) match {
+      case (Some(m: MapDBObject), value: MapDBObject) if(m.value.size == 1 && value.value.size == 1) =>
+        val f = (m.value.head._1, value.value.head._1) match {
+          case ("$lt", "$gt") => true;
+          case ("$lt", "$gte") => true;
+          case ("$lte", "$gt") => true;
+          case ("$lte", "$gte") => true;
+          case ("$gt", "$lt") => true;
+          case ("$gt", "$lte") => true;
+          case ("$gte", "$lt") => true;
+          case ("$gte", "$lte") => true;
+          case _ => false;
+        }
+        if(f){
+          ref.value + (key -> MapDBObject(m.value + value.value.head));
+        } else {
+          throw new IllegalArgumentException(key);
+        }
+      case (Some(m), _) =>
+        throw new IllegalArgumentException("%s -> %s".format(key, value));
+      case (None, _) =>
+        ref.value + (key -> value);
     }
-    new CollectionImpl(collection, MapDBObject(ref.value + (key -> value)));
+    new CollectionImpl(collection, MapDBObject(newRef));
   }
 
   def filterLt(key: String, value: DBObject): CollectionImpl =
     filterEq(key, Map("$lt" -> value));
+
+  def filterLe(key: String, value: DBObject): CollectionImpl =
+    filterEq(key, Map("$lte" -> value));
+
+  def filterGt(key: String, value: DBObject): CollectionImpl =
+    filterEq(key, Map("$gt" -> value));
+
+  def filterGe(key: String, value: DBObject): CollectionImpl =
+    filterEq(key, Map("$gte" -> value));
 
 }
 
