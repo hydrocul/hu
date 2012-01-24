@@ -25,6 +25,7 @@ private[mongodb] object DBObject {
 //      case value: java.lang.Float => DoubleDBObject(value: Double);
       case value: java.lang.Double => DoubleDBObject(value);
       case value: m.BasicDBObject => MapDBObject(value);
+      case value: Map[String, Any] => convertMapFromJava(value);
       case value: AnyRef => throw new IllegalArgumentException("%s: %s".format(
         value.getClass, value.toString));
       case _ => throw new IllegalArgumentException("%s".format(value.toString));

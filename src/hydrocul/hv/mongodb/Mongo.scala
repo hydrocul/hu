@@ -4,6 +4,8 @@ import com.{ mongodb => m }
 
 object Mongo {
 
+  def apply(dbname: String): Database = apply("localhost", 27017, dbname);
+
   def apply(host: String, port: Int, dbname: String): Database = {
     val mongo = new m.Mongo(host, port);
     val db = mongo.getDB(dbname);
@@ -32,6 +34,8 @@ object Mongo {
     val count4 = collection.filterLt("_id", 3).iterator.toSeq.size; // 2
     val count5 = collection.filterLe("_id", 3).iterator.toSeq.size; // 3
     val count6 = collection.filterLe("_id", 3).filterGe("_id", 2).iterator.toSeq.size; // 2
+    val value2 = collection.filterEq("b", "abc").increment("a"); // 2
+    val value3 = collection.filterEq("b", "abc").increment("a"); // 3
     collection.remove();
     val count7 = collection.iterator().toSeq.size; // 0
     List(
@@ -43,6 +47,8 @@ object Mongo {
       assertEquals(2, count4),
       assertEquals(3, count5),
       assertEquals(2, count6),
+      assertEquals(2L, value2),
+      assertEquals(3L, value3),
       assertEquals(0, count7)
     );
   }

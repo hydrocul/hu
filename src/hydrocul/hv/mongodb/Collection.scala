@@ -8,6 +8,8 @@ trait Collection {
 
   def remove();
 
+  def increment(key: String): Long;
+
   def iterator(): Iterator[Map[String, DBObject]];
 
   def filterEq(key: String, value: DBObject): Collection;
@@ -34,6 +36,17 @@ private[mongodb] class CollectionImpl(collection: m.DBCollection,
 
   def remove(){
     collection.remove(ref.toJava);
+  }
+
+  def increment(key: String): Long = {
+    import scala.collection.JavaConverters._;
+    val update: MapDBObject = Map("$inc" -> Map(key -> 1));
+    val result = collection.findAndModify(ref.toJava, null, null, false, update.toJava, true, true);
+    val result2 = result.asInstanceOf[m.BasicDBObject].asScala.get(key).get;
+    result2 match {
+      case result2: java.lang.Double => result2.asInstanceOf[Double].asInstanceOf[Long];
+      case _ => throw new Exception("key: %s, result: %s".format(key, result2.toString));
+    }
   }
 
   def iterator(): Iterator[Map[String, DBObject]] = {
