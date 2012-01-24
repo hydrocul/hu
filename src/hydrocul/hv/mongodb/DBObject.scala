@@ -20,6 +20,8 @@ private[mongodb] object DBObject {
       case value: mtypes.Code => CodeDBObject(value);
       case value: String => StringDBObject(value);
       case value: Int => DoubleDBObject(value.asInstanceOf[Double]);
+      case value: Long => DoubleDBObject(value.asInstanceOf[Double]);
+      case value: Float => DoubleDBObject(value.asInstanceOf[Double]);
 //      case value: java.lang.Integer => DoubleDBObject(value.asInstanceOf[Int].asInstanceOf[Double]);
 //      case value: java.lang.Long => DoubleDBObject(value: Double);
 //      case value: java.lang.Float => DoubleDBObject(value: Double);

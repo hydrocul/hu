@@ -12,6 +12,8 @@ trait Collection {
 
   def iterator(): Iterator[Map[String, DBObject]];
 
+  def filter(key: String, value: DBObject): Collection = filterEq(key, value);
+
   def filterEq(key: String, value: DBObject): Collection;
 
   def filterLt(key: String, value: DBObject): Collection;
@@ -42,6 +44,9 @@ private[mongodb] class CollectionImpl(collection: m.DBCollection,
     import scala.collection.JavaConverters._;
     val update: MapDBObject = Map("$inc" -> Map(key -> 1));
     val result = collection.findAndModify(ref.toJava, null, null, false, update.toJava, true, true);
+    if(result == null){
+      throw new NullPointerException();
+    }
     val result2 = result.asInstanceOf[m.BasicDBObject].asScala.get(key).get;
     result2 match {
       case result2: java.lang.Double => result2.asInstanceOf[Double].asInstanceOf[Long];
