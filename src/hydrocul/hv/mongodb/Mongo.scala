@@ -35,6 +35,8 @@ object Mongo {
     val count6 = collection.filterLe("_id", 3).filterGe("_id", 2).seq().size; // 2
     val value2 = collection.filterEq("b", "abc").increment("a"); // 2
     val value3 = collection.filterEq("b", "abc").increment("a"); // 3
+    val value4 = collection.sortWith("_id", false).head()("b"); // 2
+    val value5 = collection.sortWith("_id", true).head()("b"); // "def"
     collection.remove();
     val count7 = collection.iterator().toSeq.size; // 0
     List(
@@ -48,6 +50,8 @@ object Mongo {
       assertEquals(2, count6),
       assertEquals(2L, value2),
       assertEquals(3L, value3),
+      assertEquals(2, value4),
+      assertEquals("def", value5),
       assertEquals(0, count7)
     );
   }

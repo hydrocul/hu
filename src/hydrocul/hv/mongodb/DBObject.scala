@@ -13,6 +13,8 @@ private[mongodb] object DBObject {
       case value: Code => value.toJava;
       case value: String => value;
       case value: Int => value;
+      case value: Long => value;
+      case value: Float => value;
       case value: Double => value;
       case value: Map[_, _] =>
         if(value.exists(t => !t._1.isInstanceOf[String])){
@@ -40,6 +42,8 @@ private[mongodb] object DBObject {
         new Code(value.getCode);
       case value: String => value;
       case value: Int => value;
+      case value: Long => value;
+      case value: Float => value;
       case value: Double => value;
       case value: m.BasicDBObject =>
         mapConvertFromJava(value);

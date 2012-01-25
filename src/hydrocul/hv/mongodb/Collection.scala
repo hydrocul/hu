@@ -66,8 +66,10 @@ private[mongodb] class CollectionImpl(collection: m.DBCollection,
 
   def iterator(): Iterator[Map[String, Any]] = {
     import scala.collection.JavaConverters._;
-    val cursor = collection.find(mapConvertToJava(query)).iterator().asScala;
-    cursor.map(convertFromJava(_).asInstanceOf[Map[String, Any]]);
+    val cursor = collection.find(mapConvertToJava(query));
+    val cursor2 = if(sort.isEmpty) cursor.iterator().asScala else
+      cursor.sort(mapConvertToJava(sort)).iterator().asScala;
+    cursor2.map(t => mapConvertFromJava(t.asInstanceOf[m.BasicDBObject]));
   }
 
   def filterEq(key: String, value: Any): CollectionImpl = {
@@ -109,8 +111,14 @@ private[mongodb] class CollectionImpl(collection: m.DBCollection,
   def filterGe(key: String, value: Any): CollectionImpl =
     filterEq(key, Map("$gte" -> value));
 
-  def sortWith(key: String, reverse: Boolean): Collection =
-    throw new Exception("// TODO");
+  def sortWith(key: String, reverse: Boolean): Collection = {
+    val newSort = if(sort.isDefinedAt(key)){
+      throw new IllegalArgumentException(key);
+    } else {
+      sort + (key -> (if(reverse) -1 else +1));
+    }
+    new CollectionImpl(collection, query, newSort);
+  }
 
 }
 
