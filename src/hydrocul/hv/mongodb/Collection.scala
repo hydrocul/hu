@@ -24,13 +24,18 @@ trait Collection {
 
   def filterGe(key: String, value: DBObject): Collection;
 
+  def sortWith(key: String): Collection = sortWith(key, false);
+
+  def sortWith(key: String, reverse: Boolean): Collection;
+
 }
 
 private[mongodb] class CollectionImpl(collection: m.DBCollection,
-  ref: MapDBObject) extends Collection {
+  ref: MapDBObject, sort: MapDBObject) extends Collection {
 
   def this(collection: m.DBCollection) =
-    this(collection, MapDBObject(Map.empty[String, DBObject]));
+    this(collection, MapDBObject(Map.empty[String, DBObject]),
+      MapDBObject(Map.empty[String, DBObject]));
 
   def insert(value: MapDBObject){
     collection.insert(value.toJava);
@@ -85,7 +90,7 @@ private[mongodb] class CollectionImpl(collection: m.DBCollection,
       case (None, _) =>
         ref.value + (key -> value);
     }
-    new CollectionImpl(collection, MapDBObject(newRef));
+    new CollectionImpl(collection, MapDBObject(newRef), sort);
   }
 
   def filterLt(key: String, value: DBObject): CollectionImpl =
@@ -99,6 +104,9 @@ private[mongodb] class CollectionImpl(collection: m.DBCollection,
 
   def filterGe(key: String, value: DBObject): CollectionImpl =
     filterEq(key, Map("$gte" -> value));
+
+  def sortWith(key: String, reverse: Boolean): Collection =
+    throw new Exception("// TODO");
 
 }
 
