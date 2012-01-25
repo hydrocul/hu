@@ -11,13 +11,17 @@ class MonLog private(db: mongodb.Database, yisp: Yisp) {
     collection.insert(data2);
   }
 
+  def putFile(bin: Array[Byte]): String = yisp.put(bin);
+
+  def getFile(key: String): Array[Byte] = yisp.get(key);
+
   def iterator(): Iterator[Map[String, Any]] = selector.iterator();
 
   def head(): Map[String, Any] = iterator().next();
 
   def seq(): Seq[Map[String, Any]] = iterator().toSeq;
 
-  def filter(key: String, value: Any): Selector = filterEq(key, value);
+  def filter(key: String, value: Any): MonLog.Selector = filterEq(key, value);
 
   def filterEq(key: String, value: Any): MonLog.Selector = selector.filterEq(key, value);
 
