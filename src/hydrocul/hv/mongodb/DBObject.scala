@@ -5,103 +5,75 @@ import org.bson.{ types => mtypes }
 
 import hydrocul.hv.EncodingMania;
 
-trait DBObject {
-
-  def toJava: Any;
-
-}
-
 private[mongodb] object DBObject {
 
-  def convertFromJava(value: Any): DBObject = {
+  def convertToJava(value: Any): Any = {
     value match {
-      case value: DBObject => value;
-      case value: mtypes.ObjectId => ObjectIdDBObject(value);
-      case value: mtypes.Code => CodeDBObject(value);
-      case value: String => StringDBObject(value);
-      case value: Int => DoubleDBObject(value.asInstanceOf[Double]);
-      case value: Long => DoubleDBObject(value.asInstanceOf[Double]);
-      case value: Float => DoubleDBObject(value.asInstanceOf[Double]);
-//      case value: java.lang.Integer => DoubleDBObject(value.asInstanceOf[Int].asInstanceOf[Double]);
-//      case value: java.lang.Long => DoubleDBObject(value: Double);
-//      case value: java.lang.Float => DoubleDBObject(value: Double);
-      case value: java.lang.Double => DoubleDBObject(value);
-      case value: m.BasicDBObject => MapDBObject(value);
-      case value: Map[String, Any] => convertMapFromJava(value);
-      case value: AnyRef => throw new IllegalArgumentException("%s: %s".format(
-        value.getClass, value.toString));
-      case _ => throw new IllegalArgumentException("%s".format(value.toString));
+      case value: ObjectId => value.toJava;
+      case value: Code => value.toJava;
+      case value: String => value;
+      case value: Int => value;
+      case value: Double => value;
+      case value: Map[_, _] =>
+        if(value.exists(t => !t._1.isInstanceOf[String])){
+          throw new IllegalArgumentException("%s".format(value.toString));
+        }
+        mapConvertToJava(value.asInstanceOf[Map[String, Any]]);
+      case value: AnyRef =>
+        throw new IllegalArgumentException("%s: %s".format(
+          value.getClass, value.toString));
+      case _ =>
+        throw new IllegalArgumentException("%s".format(value.toString));
     }
+  }
+
+  def mapConvertToJava(value: Map[String, Any]): m.BasicDBObject = {
+    import scala.collection.JavaConverters._;
+    new m.BasicDBObject(value.map(t => (t._1, convertToJava(t._2))).asJava);
+  }
+
+  def convertFromJava(value: Any): Any = {
+    value match {
+      case value: mtypes.ObjectId =>
+        new ObjectId(value.toByteArray);
+      case value: mtypes.Code =>
+        new Code(value.getCode);
+      case value: String => value;
+      case value: Int => value;
+      case value: Double => value;
+      case value: m.BasicDBObject =>
+        mapConvertFromJava(value);
+      case value: AnyRef =>
+        throw new IllegalArgumentException("%s: %s".format(
+          value.getClass, value.toString));
+      case _ =>
+        throw new IllegalArgumentException("%s".format(value.toString));
+    }
+  }
+
+  def mapConvertFromJava(value: m.BasicDBObject): Map[String, Any] = {
+    import scala.collection.JavaConverters._;
+    value.asScala.toMap.map(t => (t._1, convertFromJava(t._2)));
   }
 
 }
 
-case class ObjectIdDBObject(value: Array[Byte]) extends DBObject {
+case class ObjectId(value: Array[Byte]){
 
   override def toString(): String =
-    "ObjectIdDBObject(" + EncodingMania.encodeHex(value) + ")";
+    "ObjectId(" + EncodingMania.encodeHex(value) + ")";
 
   def toJava: mtypes.ObjectId = new mtypes.ObjectId(value);
 
 }
 
-object ObjectIdDBObject {
+case class Code(value: String){
 
-  def apply(value: mtypes.ObjectId) = new ObjectIdDBObject(value.toByteArray);
-
-}
-
-case class CodeDBObject(value: String) extends DBObject {
+  override def toString(): String =
+    "Code(" + value + ")";
 
   def toJava: mtypes.Code = new mtypes.Code(value);
 
 }
-
-object CodeDBObject {
-
-  def apply(value: mtypes.Code) = new CodeDBObject(value.getCode);
-
-}
-
-case class StringDBObject(value: String) extends DBObject {
-
-  override def toString(): String = value;
-
-  def toJava: String = value;
-
-}
-
-object StringDBObject {
-
-}
-
-case class DoubleDBObject(value: Double) extends DBObject {
-
-  override def toString(): String = value.toString;
-
-  def toJava: Double = value;
-
-}
-
-case class MapDBObject(value: Map[String, DBObject]) extends DBObject {
-
-  override def toString(): String = value.toString;
-
-  def toJava: m.BasicDBObject = {
-    import scala.collection.JavaConverters._;
-    new m.BasicDBObject(value.map(t => (t._1, t._2.toJava)).asJava);
-  }
-
-}
-
-object MapDBObject {
-
-  def apply(value: m.BasicDBObject) = {
-    import scala.collection.JavaConverters._;
-    new MapDBObject(value.asScala.toMap.map(t => (t._1, DBObject.convertFromJava(t._2))));
-  }
-
-}
-
 
 

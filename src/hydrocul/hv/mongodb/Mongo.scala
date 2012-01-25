@@ -22,18 +22,17 @@ object Mongo {
     import hydrocul.hv.TestLib._;
     val collection = Mongo("localhost", 27017, "hutest").collection("testcollection");
     collection.remove();
-    val count0 = collection.iterator().toSeq.size; // 0
+    val count0 = collection.seq().size; // 0
     collection.insert(Map("a" -> 1, "b" -> 2, "_id" -> 1));
-    val count1 = collection.iterator().toSeq.size; // 1
+    val count1 = collection.seq().size; // 1
     collection.insert(Map("a" -> 1, "b" -> "abc", "_id" -> 2));
     collection.insert(Map("a" -> 1, "b" -> "def", "_id" -> 3));
-    val count2 = collection.iterator().toSeq.size; // 3
-    val value1 = collection.filterEq("b", "abc").iterator.next().
-      asInstanceOf[Map[String, DBObject]]("a").toJava; // 1.0
-    val count3 = collection.filterEq("b", "ABC").iterator.toSeq.size; // 0
-    val count4 = collection.filterLt("_id", 3).iterator.toSeq.size; // 2
-    val count5 = collection.filterLe("_id", 3).iterator.toSeq.size; // 3
-    val count6 = collection.filterLe("_id", 3).filterGe("_id", 2).iterator.toSeq.size; // 2
+    val count2 = collection.seq().size; // 3
+    val value1 = collection.filterEq("b", "abc").head()("a"); // 1.0
+    val count3 = collection.filterEq("b", "ABC").seq().size; // 0
+    val count4 = collection.filterLt("_id", 3).seq().size; // 2
+    val count5 = collection.filterLe("_id", 3).seq().size; // 3
+    val count6 = collection.filterLe("_id", 3).filterGe("_id", 2).seq().size; // 2
     val value2 = collection.filterEq("b", "abc").increment("a"); // 2
     val value3 = collection.filterEq("b", "abc").increment("a"); // 3
     collection.remove();
