@@ -8,6 +8,8 @@ class WebBrowser private () {
     response.contentType match {
       case Some("text/html") =>
         new HtmlPage(response, url);
+      case Some("application/json") =>
+        new JsonPage(response, url);
       case _ =>
         new BinaryPage(response, url);
     }
@@ -20,6 +22,8 @@ class WebBrowser private () {
 object WebBrowser {
 
   def create(): WebBrowser = new WebBrowser();
+
+  def doGet(url: String): Page = create().doGet(url);
 
   private[hv] def test(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
     import hydrocul.hv.TestLib._;

@@ -2,15 +2,18 @@ package hydrocul.hv.http;
 
 import java.{ io => jio }
 
+import hydrocul.hv.Json;
 import hydrocul.hv.XmlElement;
 import hydrocul.util.HtmlInputStreamReader;
 import hydrocul.util.StreamUtil;
 
-class HtmlPage private[http] (_response: Response, _url: String)
-    extends Page(_response, _url) with HtmlElement {
+class JsonPage private[http] (_response: Response, _url: String)
+    extends Page(_response, _url) {
 
   private lazy val _source: String =
     StreamUtil.stream2bin(inputStreamReader);
+
+  private lazy val json: Any = Json.decode(_source);
 
   override def toString(): String = {
     response.toStringDigest + "\n" +
@@ -28,17 +31,7 @@ class HtmlPage private[http] (_response: Response, _url: String)
     }
   }
 
-  private lazy val element: HtmlElement = HtmlElementImpl.create(XmlElement.parseHtml(_source));
-
-  def select(query: String): IndexedSeq[HtmlElement] = element.select(query);
-
-  def outerHtml: String = element.outerHtml;
-
-  def html: String = element.html;
-
-  def text: String = element.text;
-
-  def attr(name: String): String = element.attr(name);
+  def value: Any = json;
 
 }
 
