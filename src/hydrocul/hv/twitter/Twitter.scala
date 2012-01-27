@@ -19,7 +19,7 @@ object Twitter {
         }
       case _ => throw new Exception(page.toString);
     }
-    json.map(Tweet(_));
+    json.map(Tweet.fromJson(_));
   }
 
 }
