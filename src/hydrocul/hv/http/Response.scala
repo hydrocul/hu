@@ -3,7 +3,6 @@ package hydrocul.hv.http;
 import java.{ io => jio }
 
 import hydrocul.hv.EncodingMania;
-import hydrocul.hv.JStream;
 import hydrocul.util.StreamUtil;
 
 trait Response {
@@ -52,7 +51,7 @@ trait Response {
 private[http] object Response {
 
   def apply(stream: jio.InputStream): Response = {
-    val reader = new JStreamResponseReader(JStream.fromJava(stream));
+    val reader = new JStreamResponseReader(stream);
     val (code, reader2) = parseStatusLine(reader);
     val (header, reader3) = parseHeaderLines(Nil, reader2);
     val b = StreamUtil.stream2bin(reader3.toJavaInputStream);
@@ -110,7 +109,16 @@ private[http] object Response {
    */
   private trait ResponseReader {
 
-    def read(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader);
+    private var f: Boolean = false; // readをすでに呼び出しているかどうか
+
+    def read(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader) = {
+      synchronized {
+        f = true;
+        readSub(buf, off, len);
+      }
+    }
+
+    protected def readSub(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader);
 
     def close();
 
@@ -153,7 +161,7 @@ private[http] object Response {
     def readLine: (Option[String], ResponseReader) = {
       val buf = new Array[Byte](4); // TODO 大きな数字にしたほうが効率が良さそう
       val bo = new jio.ByteArrayOutputStream;
-      val (f, next) = readLineSub(bo, buf);
+      val next = readLineSub(bo, buf);
       bo.close();
       val bin = bo.toByteArray;
       if(bin.length == 0){
@@ -165,17 +173,16 @@ private[http] object Response {
     }
 
     /**
-     * LFが来るまで読み込み、OutputStreamに書きだす。
-     * 読み込んだ結果ストリームの最後に達した場合は1つ目の返り値はtrue。
+     * LFが来るかストリームの最後に達するまで読み込み、OutputStreamに書きだす。
      */
-    private def readLineSub(bo: jio.OutputStream, buf: Array[Byte]): (Boolean, ResponseReader) = {
+    private def readLineSub(bo: jio.OutputStream, buf: Array[Byte]): ResponseReader = {
       val (l, f, next) = readLineSub2(buf, 0, buf.length);
       if(l < 0){
-        (true, next);
+        next;
       } else {
         bo.write(buf, 0, l);
         if(f){
-          (false, next);
+          next;
         } else {
           next.readLineSub(bo, buf);
         }
@@ -205,11 +212,11 @@ private[http] object Response {
 
   }
 
-  private class JStreamResponseReader(stream: JStream[Byte]) extends ResponseReader {
+  private class JStreamResponseReader(stream: jio.InputStream) extends ResponseReader {
 
-    def read(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader) = {
-      val (l, next) = stream.read(buf, off, len);
-      (l, new JStreamResponseReader(next));
+    protected def readSub(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader) = {
+      val l = stream.read(buf, off, len);
+      (l, new JStreamResponseReader(stream));
     }
 
     def close(){
@@ -221,7 +228,7 @@ private[http] object Response {
   private class BufferedResponseReader(headBuf: Array[Byte], headOff: Int, headLen: Int,
       tail: ResponseReader) extends ResponseReader {
 
-    def read(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader) = {
+    protected def readSub(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader) = {
       if(len < headLen){
         System.arraycopy(headBuf, headOff, buf, off, len);
         (len, new BufferedResponseReader(headBuf, headOff + len, headLen - len, tail));
@@ -243,8 +250,7 @@ private[http] object Response {
     {
       val str = "abc\r\n" + "123\r\n" + "\r\n" + "ABC\r\n" + "DEF";
       val inputStream = new jio.ByteArrayInputStream(EncodingMania.encodeChar(str, "ISO-8859-1"));
-      val jstream = JStream.fromJava(inputStream);
-      val reader1 = new JStreamResponseReader(jstream);
+      val reader1 = new JStreamResponseReader(inputStream);
       val (actual1, reader2) = reader1.readLine;
       val (actual2, reader3) = reader2.readLine;
       val (actual3, reader4) = reader3.readLine;
