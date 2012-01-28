@@ -53,7 +53,7 @@ private[http] object Response {
   def apply(stream: jio.InputStream): Response = {
     val reader = new JStreamResponseReader(stream);
     val (code, reader2) = parseStatusLine(reader);
-    val (header, reader3) = parseHeaderLines(Nil, reader2);
+    val (header, reader3) = parseHeaderLines(reader2);
     val b = StreamUtil.stream2bin(reader3.toJavaInputStream);
     new Response {
       def statusCode = code;
@@ -83,6 +83,11 @@ private[http] object Response {
   /**
    * レスポンスヘッダの全行と本文を取得する。
    */
+  private def parseHeaderLines(reader: ResponseReader):
+      (Seq[(String, String)], ResponseReader) = {
+    parseHeaderLines(Nil, reader);
+  }
+
   private def parseHeaderLines(responseHeader: List[(String, String)], reader: ResponseReader):
       (Seq[(String, String)], ResponseReader) = {
     reader.readLine match {

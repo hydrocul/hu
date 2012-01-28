@@ -22,7 +22,7 @@ private[http] object Request {
 
   private def createGetSub(url: UrlInfo, cookie: Map[String, String],
       requestHeader: Seq[(String, String)]): String = {
-    "GET " + url.requestPath + " HTTP/1.1\r\n" +
+    "GET " + url.requestPath + " HTTP/1.0\r\n" +
     createHeaderLines(url, requestHeader, cookie) +
     "\r\n";
   }
