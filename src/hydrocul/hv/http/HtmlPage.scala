@@ -30,6 +30,8 @@ class HtmlPage private[http] (_response: Response, _url: String)
 
   private lazy val element: HtmlElement = HtmlElementImpl.create(XmlElement.parseHtml(_source));
 
+  def source = _source;
+
   def select(query: String): IndexedSeq[HtmlElement] = element.select(query);
 
   def outerHtml: String = element.outerHtml;

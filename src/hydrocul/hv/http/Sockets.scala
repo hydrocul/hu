@@ -22,20 +22,6 @@ private[http] object Sockets {
       output.flush();
 
       val input = socket.inputStream;
-/*
-if(scheme=="https"){
-val ip = input;
-while({
-  val c = ip.read();
-  if(c < 0){
-    false;
-  } else {
-    print(c.asInstanceOf[Char]);
-    true;
-  }
-}){}
-}
-*/
       val response = Response(input);
 
       response;
