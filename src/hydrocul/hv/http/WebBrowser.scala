@@ -38,16 +38,17 @@ object WebBrowser {
     import hydrocul.hv.TestLib._;
     ("http.Webbrowser", { () =>
       val browser = WebBrowser.create();
-      // val page1 = browser.doGet("http://www.yahoo.co.jp/");
+      val page1 = browser.doGet("http://www.yahoo.co.jp/");
       // val page2 = browser.doGet("https://twitter.com/");
       Nil;
-      // List(
-        // assertEquals(true, page1.isInstanceOf[HtmlPage]),
-        // assertEquals("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">", page1.asInstanceOf[HtmlPage].source.substring(0, 102)),
+      List(
+        assertEquals(true, page1.isInstanceOf[HtmlPage]),
+        assertEquals("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n", page1.asInstanceOf[HtmlPage].source.substring(0, 103)),
+        assertEquals("<html lang=\"ja\">\n", page1.asInstanceOf[HtmlPage].source.substring(103, 120))
         // assertEquals("Yahoo! JAPAN", page1.asInstanceOf[HtmlPage].select("title")(0).text)
         // assertEquals(true, page2.isInstanceOf[HtmlPage]),
         // assertEquals("DEBUG", page2.asInstanceOf[HtmlPage].select("title")(0).text)
-      // );
+      );
     }) :: Nil;
   }
 

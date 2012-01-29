@@ -64,7 +64,8 @@ object Test {
       ("EncodingMania", EncodingMania.test),
       ("Json", Json.test),
       ("JStream", JStream.test),
-      ("StreamUtil2", StreamUtil2.test)
+      ("StreamUtil2", StreamUtil2.test),
+      XmlElement.test()
     );
   }
 

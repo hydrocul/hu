@@ -11,6 +11,15 @@ trait XmlElement {
 
   def select(query: String): XmlElements;
 
+  def selectFirst(query: String): Option[XmlElement] = {
+    val r = select(query);
+    if(r.size > 0){
+      Some(r(0));
+    } else {
+      None;
+    }
+  }
+
   def outerHtml: String;
 
   def html: String;
@@ -33,6 +42,53 @@ object XmlElement {
 
   def parseHtml(html: String): XmlElement =
     new XmlElementImpl(jsoup.parser.Parser.parse(html, "").body);
+
+  private[hv] def test(): (String, Function0[Seq[Option[String]]]) = {
+    import hydrocul.hv.TestLib._;
+    ("XmlElement", { () =>
+      val html1 = """
+        |<html>
+        |<head>
+        |<title>abc</title>
+        |</head>
+        |<body>
+        |<title>def</title>
+        |</body>
+        |</html>
+        |""".stripMargin;
+      val html2 = """
+        |<!DOCTYPE html>
+        |<html>
+        |<head>
+        |<title>abc</title>
+        |</head>
+        |<body>
+        |<title>def</title>
+        |</body>
+        |</html>
+        |""".stripMargin;
+      List(
+        assertEquals(Some("abc"),
+          parseHtml("<body><a href=\"abc\">def</a></body>").
+          selectFirst("a").map(_.attr("href"))),
+        assertEquals(Some("def"),
+          parseHtml("<body><a href=\"abc\">def</a></body>").
+          selectFirst("a").map(_.text)),
+        assertEquals(Some("def"),
+          parseHtml("<body><a href=\"abc\">def</a></body>").
+          selectFirst("a").map(_.html)),
+        assertEquals(Some("<a href=\"abc\">def</a>"),
+          parseHtml("<body><a href=\"abc\">def</a></body>").
+          selectFirst("a").map(_.outerHtml)),
+        assertEquals(Some("abc"),
+          parseHtml(html1).
+          selectFirst("title").map(_.text)),
+        assertEquals(Some("abc"),
+          parseHtml(html2).
+          selectFirst("title").map(_.text))
+      );
+    });
+  }
 
 }
 
