@@ -41,7 +41,7 @@ trait XmlElements extends IndexedSeq[XmlElement] {
 object XmlElement {
 
   def parseHtml(html: String): XmlElement =
-    new XmlElementImpl(jsoup.parser.Parser.parse(html, "").body);
+    new XmlElementImpl(jsoup.parser.Parser.parse(html, ""));
 
   private[hv] def test(): (String, Function0[Seq[Option[String]]]) = {
     import hydrocul.hv.TestLib._;
