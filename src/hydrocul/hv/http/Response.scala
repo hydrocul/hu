@@ -118,6 +118,9 @@ private[http] object Response {
 
     def read(buf: Array[Byte], off: Int, len: Int): (Int, ResponseReader) = {
       synchronized {
+        if(f){
+          throw new IllegalStateException();
+        }
         f = true;
         readSub(buf, off, len);
       }
@@ -150,7 +153,11 @@ private[http] object Response {
       override def read(buf: Array[Byte], off: Int, len: Int): Int = {
         val (l, next) = reader.read(buf, off, len);
         reader = next;
-        l;
+        if(l == 0){
+          read(buf, off, len);
+        } else {
+          l;
+        }
       }
 
       override def close(){
@@ -164,7 +171,7 @@ private[http] object Response {
      * すでにストリームの最後に達していた場合は1つ目の返り値はNone。
      */
     def readLine: (Option[String], ResponseReader) = {
-      val buf = new Array[Byte](4); // TODO 大きな数字にしたほうが効率が良さそう
+      val buf = new Array[Byte](1024);
       val bo = new jio.ByteArrayOutputStream;
       val next = readLineSub(bo, buf);
       bo.close();
