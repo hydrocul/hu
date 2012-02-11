@@ -1,12 +1,22 @@
 package hydrocul.hv.twitter;
 
+import hydrocul.hv.DateStringUtil;
+
 trait Tweet {
 
   def id: Long;
 
+  def timeStamp: Long;
+
   def text: String;
 
-  def toString(): String;
+  def retweeted: Option[Long];
+
+  override def toString(): String = {
+    val s = (new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ",
+      java.util.Locale.US)).format(new java.util.Date(timeStamp * 1000));
+    "%d %s: %s".format(id, s, text);
+  }
 
 }
 
@@ -21,8 +31,11 @@ private[twitter] object Tweet {
 
     val id = json2("id_str").asInstanceOf[String].toLong;
 
+    // 投稿日時
+    val timeStamp = DateStringUtil.parse(json2("created_at").asInstanceOf[String]) / 1000;
+
     // 生のテキスト
-    val text = json2("text").asInstanceOf[String];
+    val text = json2("text").asInstanceOf[String]; // + json2.toString; // DEBUG
 
     // t.co の短縮URLを展開したテキスト
     val text2 = {
@@ -36,18 +49,20 @@ private[twitter] object Tweet {
     val retweet = json2.get("retweeted_status").map(j =>
       j.asInstanceOf[Map[String, Any]]("id_str").asInstanceOf[String].toLong);
 
-    new TweetImpl(id, text2, retweet);
+    new TweetImpl(id, timeStamp, text2, retweet);
 
   }
 
-  private[twitter] class TweetImpl(_id: Long, _text: String, retweet: Option[Long]) extends Tweet {
+  private[twitter] class TweetImpl(_id: Long, _timeStamp: Long, _text: String,
+    _retweeted: Option[Long]) extends Tweet {
 
     def id: Long = _id;
 
+    def timeStamp: Long = _timeStamp;
+
     def text: String = _text;
 
-    override def toString(): String = "%d%s: %s".format(id,
-      retweet.map(r => " RT(%d)".format(r)).getOrElse(""), text);
+    def retweeted: Option[Long] = _retweeted;
 
   }
 
