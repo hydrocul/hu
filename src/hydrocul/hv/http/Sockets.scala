@@ -7,10 +7,22 @@ private[http] object Sockets {
 
   def doGet(host: String, url: UrlInfo, cookie: Map[String, String],
       requestHeader: Seq[(String, String)]): Response = {
+    doSub(host, url, cookie, requestHeader, None);
+  }
+
+  def doPost(host: String, url: UrlInfo, cookie: Map[String, String],
+      requestHeader: Seq[(String, String)], body: Array[Byte]): Response = {
+    doSub(host, url, cookie, requestHeader, Some(body));
+  }
+
+  def doSub(host: String, url: UrlInfo, cookie: Map[String, String],
+      requestHeader: Seq[(String, String)], body: Option[Array[Byte]]): Response = {
 
     val scheme = url.scheme;
 
-    val requestBin = Request.createGet(url, cookie, requestHeader);
+    val method = body match { case Some(_) => "POST"; case None => "GET" }
+
+    val requestBin = Request.createRequest(url, method, cookie, requestHeader);
 
     val port = url.port.getOrElse(80);
     val inetAddress = jnet.InetAddress.getByName(host);
@@ -19,6 +31,10 @@ private[http] object Sockets {
 
       val output = socket.outputStream;
       output.write(requestBin);
+      body match {
+        case Some(bin) => output.write(bin);
+        case _ => ;
+      }
       output.flush();
 
       val input = socket.inputStream;

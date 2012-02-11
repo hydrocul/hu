@@ -29,26 +29,12 @@ private[http] case class UrlInfo (
       ":" + port.get;
     }) +
     path +
-    queryStr;
+    UrlInfo.queryToUrlEncoded(query);
   }
 
   def requestPath: String = {
     path +
-    queryStr;
-  }
-
-  private def queryStr: String = {
-    if(!query.isDefined){
-      "";
-    } else {
-      query.get.map { p =>
-        if(!p._2.isDefined){
-          p._1;
-        } else {
-          p._1 + "=" + p._2.get;
-        }
-      }.mkString("?", "&", "");
-    }
+    UrlInfo.queryToUrlEncoded(query);
   }
 
   /**
@@ -100,6 +86,23 @@ private[http] object UrlInfo {
       } else {
         (p(0), Some(p(1)));
       }
+    }
+  }
+
+  /**
+   * a=1&b=2 の形式の文字列にする。引数に渡すパラメータはURLエンコード済みの前提とする。
+   */
+  private[http] def queryToUrlEncoded(query: Option[Seq[(String, Option[String])]]): String = {
+    query match {
+      case None => "";
+      case Some(query) =>
+        query.map { p =>
+          if(!p._2.isDefined){
+            p._1;
+          } else {
+            p._1 + "=" + p._2.get;
+          }
+        }.mkString("?", "&", "");
     }
   }
 

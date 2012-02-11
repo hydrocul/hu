@@ -4,32 +4,21 @@ import hydrocul.hv.EncodingMania;
 
 private[http] object Request {
 
-  def createGet(url: UrlInfo, cookie: Map[String, String],
+  def createRequest(url: UrlInfo, method: String, cookie: Map[String, String],
       requestHeader: Seq[(String, String)]): Array[Byte] =
     EncodingMania.encodeChar(
-      createGetSub(url, cookie, requestHeader),
-      "ISO-8859-1");
-
-  def createPost(url: UrlInfo, postParam: Map[String, String],
-      cookie: Map[String, String], requestHeader: Seq[(String, String)]): Array[Byte] =
-    EncodingMania.encodeChar(
-      createPostSub(url, postParam, cookie, requestHeader),
+      createRequestSub(url, method, cookie, requestHeader),
       "ISO-8859-1");
 
   val defaultHeader: Seq[(String, String)] = List(
     ("User-Agent", "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)") // IE7
   );
 
-  private def createGetSub(url: UrlInfo, cookie: Map[String, String],
+  private def createRequestSub(url: UrlInfo, method: String, cookie: Map[String, String],
       requestHeader: Seq[(String, String)]): String = {
-    "GET " + url.requestPath + " HTTP/1.0\r\n" +
+    method + " " + url.requestPath + " HTTP/1.0\r\n" +
     createHeaderLines(url, requestHeader, cookie) +
     "\r\n";
-  }
-
-  private def createPostSub(url: UrlInfo, postParam: Map[String, String],
-      cookie: Map[String, String], requestHeader: Seq[(String, String)]): String = {
-    throw new Exception("// TODO");
   }
 
   private def createHeaderLines(url: UrlInfo, requestHeader: Seq[(String, String)],
