@@ -61,6 +61,7 @@ object Test {
     List[(String, Function0[Seq[Option[String]]])](
       ("Test", testTest),
       ("CipherUtil", CipherUtil.test),
+      ("DateStringUtil", DateStringUtil.test),
       ("EncodingMania", EncodingMania.test),
       ("Json", Json.test),
       ("JStream", JStream.test),
