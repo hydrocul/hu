@@ -29,12 +29,12 @@ private[http] case class UrlInfo (
       ":" + port.get;
     }) +
     path +
-    UrlInfo.queryToUrlEncoded(query);
+    query.map("?" + UrlInfo.queryToUrlEncoded(_)).getOrElse("");
   }
 
   def requestPath: String = {
     path +
-    UrlInfo.queryToUrlEncoded(query);
+    query.map("?" + UrlInfo.queryToUrlEncoded(_)).getOrElse("");
   }
 
   /**
@@ -92,18 +92,14 @@ private[http] object UrlInfo {
   /**
    * a=1&b=2 の形式の文字列にする。引数に渡すパラメータはURLエンコード済みの前提とする。
    */
-  private[http] def queryToUrlEncoded(query: Option[Seq[(String, Option[String])]]): String = {
-    query match {
-      case None => "";
-      case Some(query) =>
-        query.map { p =>
-          if(!p._2.isDefined){
-            p._1;
-          } else {
-            p._1 + "=" + p._2.get;
-          }
-        }.mkString("?", "&", "");
-    }
+  private[http] def queryToUrlEncoded(query: Seq[(String, Option[String])]): String = {
+    query.map { p =>
+      if(!p._2.isDefined){
+        p._1;
+      } else {
+        p._1 + "=" + p._2.get;
+      }
+    }.mkString("&");
   }
 
   // TODO 認証情報に未対応

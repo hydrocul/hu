@@ -12,9 +12,11 @@ class WebBrowser private () {
 
   def doPost(url: String, postParam: Map[String, String]): Page = {
     val urlInfo = UrlInfo(url);
-    val postStr = UrlInfo.queryToUrlEncoded(Some(paramMapToSeq(postParam)));
+    val postStr = UrlInfo.queryToUrlEncoded(paramMapToSeq(postParam));
     val postBin = EncodingMania.encodeChar(postStr, "ISO-8859-1");
-    val response = Sockets.doPost(urlInfo.host, urlInfo, Map.empty, Request.defaultHeader,
+    val response = Sockets.doPost(urlInfo.host, urlInfo, Map.empty,
+      Request.defaultHeader :+ ("Content-Type" -> "application/x-www-form-urlencoded")
+      :+ ("Content-Length" -> postBin.length.toString),
       postBin);
     responseToPage(url, response);
   }
@@ -60,9 +62,8 @@ object WebBrowser {
       val browser = WebBrowser.create();
       val page1 = browser.doGet("http://www.yahoo.co.jp/");
       val page2 = browser.doGet("https://twitter.com/");
-      val page3 = browser.doGet("https://member.livedoor.com/login/");
-      val page4 = browser.doPost("https://member.livedoor.com/login/index",
-        Map("livedoor_id" -> "testid", "password" -> "testpw"));
+      val page3 = browser.doPost("http://www.ugtop.com/spill.shtml",
+        Map("a" -> "AAA"));
       Nil;
       List(
         assertEquals(true, page1.isInstanceOf[HtmlPage]),
@@ -71,8 +72,9 @@ object WebBrowser {
         assertEquals("Yahoo! JAPAN", page1.asInstanceOf[HtmlPage].select("title")(0).text),
         assertEquals(true, page2.isInstanceOf[HtmlPage]),
         assertEquals("Twitter", page2.asInstanceOf[HtmlPage].select("title")(0).text),
-        assertEquals("livedoor ログイン", page3.asInstanceOf[HtmlPage].select("title")(0).text),
-        assertEquals("testid", page4.asInstanceOf[HtmlPage].select("#livedoor_id")(0).attr("value"))
+        assertEquals("POST", page3.asInstanceOf[HtmlPage].select("td:contains(FORMの情報) + td")(0).text),
+        assertEquals("application/x-www-form-urlencoded", page3.asInstanceOf[HtmlPage].select("td:contains(FORMのタイプ) + td")(0).text),
+        assertEquals("5", page3.asInstanceOf[HtmlPage].select("td:contains(FORMのバイト数) + td")(0).text)
       );
     }) :: Nil;
   }
