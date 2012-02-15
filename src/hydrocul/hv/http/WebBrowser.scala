@@ -64,6 +64,8 @@ object WebBrowser {
       val page2 = browser.doGet("https://twitter.com/");
       val page3 = browser.doPost("http://www.ugtop.com/spill.shtml",
         Map("a" -> "AAA"));
+      val page4 = browser.doPost("https://member.livedoor.com/login/index",
+        Map("livedoor_id" -> "testid", "password" -> "testpw"));
       Nil;
       List(
         assertEquals(true, page1.isInstanceOf[HtmlPage]),
@@ -74,7 +76,8 @@ object WebBrowser {
         assertEquals("Twitter", page2.asInstanceOf[HtmlPage].select("title")(0).text),
         assertEquals("POST", page3.asInstanceOf[HtmlPage].select("td:contains(FORMの情報) + td")(0).text),
         assertEquals("application/x-www-form-urlencoded", page3.asInstanceOf[HtmlPage].select("td:contains(FORMのタイプ) + td")(0).text),
-        assertEquals("5", page3.asInstanceOf[HtmlPage].select("td:contains(FORMのバイト数) + td")(0).text)
+        assertEquals("5", page3.asInstanceOf[HtmlPage].select("td:contains(FORMのバイト数) + td")(0).text),
+        assertEquals("testid", page4.asInstanceOf[HtmlPage].select("#livedoor_id")(0).attr("value"))
       );
     }) :: Nil;
   }
