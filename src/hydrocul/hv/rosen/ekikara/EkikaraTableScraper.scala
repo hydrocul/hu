@@ -8,6 +8,16 @@ object EkikaraTableScraper {
   def scrape(url: String, startEndList: List[StartEndIndex],
     prevResult: List[IndexedSeq[TrainTimePair]],
     doGet: String => Page){
+
+    val page = doGet(url);
+
+    scrape(page, startEndList, prevResult, doGet);
+
+  }
+
+  private def scrape(page: Page, startEndList: List[StartEndIndex],
+    prevResult: List[IndexedSeq[TrainTimePair]],
+    doGet: String => Page){
 /* TODO
 		val doc = content.getDOM;
 
