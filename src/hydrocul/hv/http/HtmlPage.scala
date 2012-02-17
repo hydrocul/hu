@@ -28,11 +28,11 @@ class HtmlPage private[http] (_response: Response, _url: String)
     }
   }
 
-  private lazy val element: HtmlElement = HtmlElementImpl.create(XmlElement.parseHtml(_source));
+  private lazy val element: HtmlElement = new HtmlElementImpl(XmlElement.parseHtml(_source));
 
   def source = _source;
 
-  def select(query: String): IndexedSeq[HtmlElement] = element.select(query);
+  def select(query: String): HtmlElements = element.select(query);
 
   def outerHtml: String = element.outerHtml;
 

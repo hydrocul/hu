@@ -11,15 +11,6 @@ trait XmlElement {
 
   def select(query: String): XmlElements;
 
-  def selectFirst(query: String): Option[XmlElement] = {
-    val r = select(query);
-    if(r.size > 0){
-      Some(r(0));
-    } else {
-      None;
-    }
-  }
-
   def outerHtml: String;
 
   def html: String;
@@ -34,7 +25,16 @@ trait XmlElement {
 
 trait XmlElements extends IndexedSeq[XmlElement] {
 
-  def select(query: String): hydrocul.hv.XmlElements;
+  def select(query: String): hydrocul.hv.XmlElements =
+    apply(0).select(query);
+
+  def outerHtml: String = apply(0).outerHtml;
+
+  def html: String = apply(0).html;
+
+  def text: String = apply(0).text;
+
+  def attr(name: String): String = apply(0).attr(name);
 
 }
 
@@ -68,24 +68,24 @@ object XmlElement {
         |</html>
         |""".stripMargin;
       List(
-        assertEquals(Some("abc"),
+        assertEquals("abc",
           parseHtml("<body><a href=\"abc\">def</a></body>").
-          selectFirst("a").map(_.attr("href"))),
-        assertEquals(Some("def"),
+          select("a").attr("href")),
+        assertEquals("def",
           parseHtml("<body><a href=\"abc\">def</a></body>").
-          selectFirst("a").map(_.text)),
-        assertEquals(Some("def"),
+          select("a").text),
+        assertEquals("def",
           parseHtml("<body><a href=\"abc\">def</a></body>").
-          selectFirst("a").map(_.html)),
-        assertEquals(Some("<a href=\"abc\">def</a>"),
+          select("a").html),
+        assertEquals("<a href=\"abc\">def</a>",
           parseHtml("<body><a href=\"abc\">def</a></body>").
-          selectFirst("a").map(_.outerHtml)),
-        assertEquals(Some("abc"),
+          select("a").outerHtml),
+        assertEquals("abc",
           parseHtml(html1).
-          selectFirst("title").map(_.text)),
-        assertEquals(Some("abc"),
+          select("title").text),
+        assertEquals("abc",
           parseHtml(html2).
-          selectFirst("title").map(_.text))
+          select("title").text)
       );
     });
   }
@@ -110,9 +110,6 @@ private[hv] class XmlElementImpl(val elem: jsoup.nodes.Element) extends XmlEleme
 
 private[hv] class XmlElementsImpl(elems: jsoup.select.Elements) extends XmlElements
     with IndexedSeq[XmlElementImpl] with IndexedSeqLike[XmlElementImpl, XmlElementsImpl] {
-
-  def select(query: String): hydrocul.hv.XmlElements =
-    new XmlElementsImpl(elems.select(query));
 
   def apply(index: Int): XmlElementImpl = new XmlElementImpl(elems.get(index));
 
