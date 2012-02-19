@@ -1,13 +1,40 @@
 package hydrocul.hv.rosen.ekikara;
 
+import hydrocul.hv.http.HtmlPage;
 import hydrocul.hv.http.Page;
+import hydrocul.hv.http.WebBrowser;
+import hydrocul.hv.rosen.TrainTime;
 import hydrocul.hv.rosen.TrainTimePair;
 
 object EkikaraTableScraper {
 
+  case class StartEndIndex (
+    startStation: String,
+    endStation: String,
+    startIndex: Int,
+    endIndex: Int
+  );
+
+  def scrape(url: String, startEndList: List[StartEndIndex]):
+    List[IndexedSeq[TrainTimePair]] = {
+
+    scrape(url, startEndList, { url: String =>
+      WebBrowser.doGet(url);
+    });
+
+  }
+
   def scrape(url: String, startEndList: List[StartEndIndex],
+    doGet: String => Page): List[IndexedSeq[TrainTimePair]] = {
+
+    scrape(url, startEndList, List.fill[IndexedSeq[TrainTimePair]](
+      startEndList.size)(Vector.empty[TrainTimePair]), doGet);
+
+  }
+
+  private def scrape(url: String, startEndList: List[StartEndIndex],
     prevResult: List[IndexedSeq[TrainTimePair]],
-    doGet: String => Page){
+    doGet: String => Page): List[IndexedSeq[TrainTimePair]] = {
 
     val page = doGet(url);
 
@@ -17,73 +44,91 @@ object EkikaraTableScraper {
 
   private def scrape(page: Page, startEndList: List[StartEndIndex],
     prevResult: List[IndexedSeq[TrainTimePair]],
-    doGet: String => Page){
-/* TODO
-		val doc = content.getDOM;
+    doGet: String => Page): List[IndexedSeq[TrainTimePair]] = {
 
- 		val table = doc.getElementById("container02").getChildNodes.
-			filter(_.getTagName()=="TABLE")(7).
-			getElementsByTagName("TABLE")(0).
-			getElementsByTagName("TABLE")(0);
-		val trList = table.getElementsByTagName("TR");
-		val tdList: IndexedSeq[IndexedSeq[Option[TrainTime]]] =
-			(6 until trList.length - 1).map(index => {
-				val tr = trList(index);
-				val tdList = tr.getElementsByTagName("TD");
-				tdList.drop(2).map(td =>
-					td.getElementsByTagName("SPAN").
-						map(s => TrainTime(s.getTextContent.trim)))
-			}).transpose.map(_.flatten);
-		val list: List[IndexedSeq[TrainTimePair]] = startEndList.map(
-			startEnd => {
-				tdList.map(td => {
-					(td(startEnd.startIndex), td(startEnd.endIndex))
-				}).flatMap(tt => {
-					if(!tt._1.isDefined || !tt._2.isDefined){
-						Nil
-					} else {
-						TrainTimePair(tt._1.get, tt._2.get) :: Nil
-					}
-				})
-			}
-		);
-		val result = prevResult.zip(list).map(r => r._1 ++ r._2);
-		val aList = doc.getElementById("container02").getChildNodes.
-			filter(_.getTagName()=="TABLE")(6).
-			getElementsByTagName("SPAN")(0).
-			getElementsByTagName("A").
-			filter(_.getTextContent=="次頁");
-		if(aList.length > 0){
-			val fname = aList(0).getAttribute("href");
-			val p = url.lastIndexOf('/');
-			val nextUrl = url.substring(0, p) + "/" + fname;
-			FetchUrl.task(nextUrl, scrape(_, nextUrl, startEndList,
-					result, filter, task)).submit();
-		} else {
-			DBObject.getAndPut[TrainStationTimeTable](
-					"hydrocul.dog.rosen.timeTable")(mapOp => {
- 				var map2 = mapOp match {
-					case Some(map) => map
-					case None => Map.empty[TrainStationPair, IndexedSeq[TrainTimePair]]
-				}
-				startEndList.map(s => TrainStationPair(s.startStation, s.endStation)).
-						zip(result).foreach({
-					case (stationPair, times) => {
-						map2 = map2 + filter(map2, stationPair, times);
-					}
-				});
-				map2
-			});
-			task.schedule(6, TimeUnit.HOURS);
-		}
-*/
+    val htmlPage = page.asInstanceOf[HtmlPage];
+
+    // HTMLの構造が変わったときに変わった箇所を判明しやすいように
+    // CSSセレクタですべてを一度に書くのではなく、
+    // 順番に要素をたどっていく
+    val el1 = htmlPage.select("#container02");
+    val result = {
+
+      val el2 = el1.select("table:eq(9)");
+      val el3 = el2.select("> tbody table:eq(0)");
+      val el4 = el3.select("> tbody table:eq(0)");
+      val trList = el4.select("> tbody > tr");
+      val tdList: IndexedSeq[IndexedSeq[Option[TrainTime]]] = {
+        val trList2 = trList.drop(6).dropRight(1);
+        // trList2 は、
+        // http://ekikara.jp/newdata/line/1310021/up1_1.htm
+        // などで複数のtrが存在する可能性がある
+        trList2.map { tr =>
+          val tdList = tr.select("td");
+          tdList.drop(2).map { td =>
+            td.select("span").map { s =>
+              try {
+                Some(TrainTime(s.text.trim));
+              } catch { case e: IllegalArgumentException =>
+                None;
+              }
+            }
+          }
+        }.transpose.map(_.flatten);
+      }
+      val list: List[IndexedSeq[TrainTimePair]] = startEndList.map { startEnd =>
+        tdList.map { td =>
+          (td(startEnd.startIndex), td(startEnd.endIndex))
+        }.flatMap { tt =>
+          if(!tt._1.isDefined || !tt._2.isDefined){
+            Nil
+          } else {
+            TrainTimePair(tt._1.get, tt._2.get) :: Nil
+          }
+        }
+      }
+      prevResult.zip(list).map(r => r._1 ++ r._2);
+    }
+
+    {
+      val el2 = el1.select("table:eq(8)");
+      val a = el2.select("a:contains(次頁)");
+      if(a.isEmpty){
+        result;
+      } else {
+        val fname = a.attr("href");
+        val url = page.url;
+        val p = url.lastIndexOf('/');
+        val nextUrl = url.substring(0, p) + "/" + fname;
+        scrape(nextUrl, startEndList, result, doGet);
+      }
+    }
+
   }
 
-	case class StartEndIndex (
-		startStation: String,
-		endStation: String,
-		startIndex: Int,
-		endIndex: Int
-	);
+  private[rosen] def test(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
+    if(!all){
+      return Nil;
+    }
+    import hydrocul.hv.TestLib._;
+    ("rosen.ekikara", { () =>
+      val result = scrape("http://ekikara.jp/newdata/line/1310021/down1_1.htm",
+        List(
+          StartEndIndex("赤坂見附", "新宿三丁目", 13, 17),
+          StartEndIndex("赤坂見附", "新宿", 13, 18)
+        ));
+      val result1 = result(0).take(2);
+      val expected1 = Vector(TrainTimePair("05:26", "05:34"), TrainTimePair("05:33", "05:41"));
+      val result2 = result(1).take(2);
+      val expected2 = Vector(TrainTimePair("05:26", "05:35"), TrainTimePair("05:33", "05:42"));
+      val result3 = result(1)(9);
+      val expected3 = TrainTimePair("06:31", "06:40");
+      List(
+        assertEquals(expected1, result1),
+        assertEquals(expected2, result2),
+        assertEquals(expected3, result3)
+      );
+    } ) :: Nil;
+  }
 
 }

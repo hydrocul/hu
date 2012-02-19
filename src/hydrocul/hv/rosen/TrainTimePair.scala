@@ -5,3 +5,10 @@ case class TrainTimePair (
 	start: TrainTime,
 	end: TrainTime
 );
+
+object TrainTimePair {
+
+	def apply(start: String, end: String): TrainTimePair =
+    new TrainTimePair(TrainTime(start), TrainTime(end));
+
+}
