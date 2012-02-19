@@ -15,8 +15,8 @@ object EkikaraTableScraper {
     endIndex: Int
   );
 
-  def scrape(url: String, startEndList: List[StartEndIndex]):
-    List[IndexedSeq[TrainTimePair]] = {
+  def scrape(url: String, startEndList: Seq[StartEndIndex]):
+    Seq[IndexedSeq[(TrainTimePair, Option[String])]] = {
 
     scrape(url, startEndList, { url: String =>
       WebBrowser.doGet(url);
@@ -24,17 +24,17 @@ object EkikaraTableScraper {
 
   }
 
-  def scrape(url: String, startEndList: List[StartEndIndex],
-    doGet: String => Page): List[IndexedSeq[TrainTimePair]] = {
+  def scrape(url: String, startEndList: Seq[StartEndIndex],
+    doGet: String => Page): Seq[IndexedSeq[(TrainTimePair, Option[String])]] = {
 
-    scrape(url, startEndList, List.fill[IndexedSeq[TrainTimePair]](
-      startEndList.size)(Vector.empty[TrainTimePair]), doGet);
+    scrape(url, startEndList, List.fill[IndexedSeq[(TrainTimePair, Option[String])]](
+      startEndList.size)(Vector.empty[(TrainTimePair, Option[String])]), doGet);
 
   }
 
-  private def scrape(url: String, startEndList: List[StartEndIndex],
-    prevResult: List[IndexedSeq[TrainTimePair]],
-    doGet: String => Page): List[IndexedSeq[TrainTimePair]] = {
+  private def scrape(url: String, startEndList: Seq[StartEndIndex],
+    prevResult: Seq[IndexedSeq[(TrainTimePair, Option[String])]],
+    doGet: String => Page): Seq[IndexedSeq[(TrainTimePair, Option[String])]] = {
 
     val page = doGet(url);
 
@@ -42,9 +42,9 @@ object EkikaraTableScraper {
 
   }
 
-  private def scrape(page: Page, startEndList: List[StartEndIndex],
-    prevResult: List[IndexedSeq[TrainTimePair]],
-    doGet: String => Page): List[IndexedSeq[TrainTimePair]] = {
+  private def scrape(page: Page, startEndList: Seq[StartEndIndex],
+    prevResult: Seq[IndexedSeq[(TrainTimePair, Option[String])]],
+    doGet: String => Page): Seq[IndexedSeq[(TrainTimePair, Option[String])]] = {
 
     val htmlPage = page.asInstanceOf[HtmlPage];
 
@@ -58,14 +58,25 @@ object EkikaraTableScraper {
       val el3 = el2.select("> tbody table:eq(0)");
       val el4 = el3.select("> tbody table:eq(0)");
       val trList = el4.select("> tbody > tr");
-      val tdList: IndexedSeq[IndexedSeq[Option[TrainTime]]] = {
+      val tdList1: IndexedSeq[Option[String]] = {
+        val tdList = trList(4).select("td").drop(1);
+        tdList.map { td =>
+          try {
+            val href = td.select("a").attr("href");
+            hydrocul.hu.UrlUtil.createUrl(page.url, href);
+          } catch { case e: IndexOutOfBoundsException =>
+            None;
+          }
+        }
+      }
+      val tdList2: IndexedSeq[IndexedSeq[Option[TrainTime]]] = {
         val trList2 = trList.drop(6).dropRight(1);
-        // trList2 は、
-        // http://ekikara.jp/newdata/line/1310021/up1_1.htm
-        // などで複数のtrが存在する可能性がある
+          // trList2 は、
+          // http://ekikara.jp/newdata/line/1310021/up1_1.htm
+          // などで複数のtrが存在する可能性がある
         trList2.map { tr =>
-          val tdList = tr.select("td");
-          tdList.drop(2).map { td =>
+          val tdList = tr.select("td").drop(2);
+          tdList.map { td =>
             td.select("span").map { s =>
               try {
                 Some(TrainTime(s.text.trim));
@@ -76,14 +87,14 @@ object EkikaraTableScraper {
           }
         }.transpose.map(_.flatten);
       }
-      val list: List[IndexedSeq[TrainTimePair]] = startEndList.map { startEnd =>
-        tdList.map { td =>
-          (td(startEnd.startIndex), td(startEnd.endIndex))
-        }.flatMap { tt =>
-          if(!tt._1.isDefined || !tt._2.isDefined){
+      val list: Seq[IndexedSeq[(TrainTimePair, Option[String])]] = startEndList.map { startEnd =>
+        (tdList1 zip tdList2).map { case (detailUrlOpt, td) =>
+          (td(startEnd.startIndex), td(startEnd.endIndex), detailUrlOpt)
+        }.flatMap { t =>
+          if(!t._1.isDefined || !t._2.isDefined){
             Nil
           } else {
-            TrainTimePair(tt._1.get, tt._2.get) :: Nil
+            (TrainTimePair(t._1.get, t._2.get), t._3) :: Nil
           }
         }
       }
@@ -117,12 +128,13 @@ object EkikaraTableScraper {
           StartEndIndex("赤坂見附", "新宿三丁目", 13, 17),
           StartEndIndex("赤坂見附", "新宿", 13, 18)
         ));
-      val result1 = result(0).take(2);
+      val result1 = result(0).take(2).map(_._1);
       val expected1 = Vector(TrainTimePair("05:26", "05:34"), TrainTimePair("05:33", "05:41"));
-      val result2 = result(1).take(2);
+      val result2 = result(1).take(2).map(_._1);
       val expected2 = Vector(TrainTimePair("05:26", "05:35"), TrainTimePair("05:33", "05:42"));
       val result3 = result(1)(9);
-      val expected3 = TrainTimePair("06:31", "06:40");
+      val expected3 = (TrainTimePair("06:31", "06:40"),
+        Some("http://ekikara.jp/newdata/detail/1310021/142287.htm"));
       List(
         assertEquals(expected1, result1),
         assertEquals(expected2, result2),
