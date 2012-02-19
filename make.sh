@@ -17,7 +17,7 @@ cd `dirname $0`
     exit 1
   fi
 
-  if [ "$1" = "all" ] ; then
+  if [ "$1" = "testall" ] ; then
     buildlib_testall
     if [ $? -ne 0 ] ; then
       exit 1

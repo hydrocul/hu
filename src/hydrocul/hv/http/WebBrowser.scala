@@ -57,6 +57,9 @@ object WebBrowser {
   }
 
   private def testSub(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
+    if(!all){
+      return Nil;
+    }
     import hydrocul.hv.TestLib._;
     ("http.Webbrowser", { () =>
       val browser = WebBrowser.create();
