@@ -108,7 +108,7 @@ object EkikaraTableScraper {
         tdList.map { td =>
           try {
             val href = td.select("a").attr("href");
-            hydrocul.hu.UrlUtil.createUrl(page.url, href);
+            hydrocul.hu.UrlUtil.createUrl(page.url, href); // TODO huパッケージを使ってしまっている
           } catch { case e: IndexOutOfBoundsException =>
             None;
           }
