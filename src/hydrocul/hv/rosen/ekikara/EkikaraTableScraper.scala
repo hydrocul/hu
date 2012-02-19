@@ -3,17 +3,62 @@ package hydrocul.hv.rosen.ekikara;
 import hydrocul.hv.http.HtmlPage;
 import hydrocul.hv.http.Page;
 import hydrocul.hv.http.WebBrowser;
+import hydrocul.hv.rosen.TrainStationTimeTable;
 import hydrocul.hv.rosen.TrainTime;
 import hydrocul.hv.rosen.TrainTimePair;
 
 object EkikaraTableScraper {
 
-  case class StartEndIndex (
-    startStation: String,
-    endStation: String,
-    startIndex: Int,
-    endIndex: Int
-  );
+  /* SAMPLE:
+    val list = List(
+      (
+        "http://ekikara.jp/newdata/line/1310021/up1_1.htm",
+        List(
+          StartEndIndex("霞ヶ関", "池袋", 20, 32),
+          StartEndIndex("銀座", "池袋", 21, 32),
+          StartEndIndex("東京(丸)", "池袋", 22, 32)
+        )
+      ),
+      (
+        "http://ekikara.jp/newdata/line/1310011/up1_1.htm",
+        List(
+          StartEndIndex("虎ノ門", "銀座", 7, 9)
+        )
+      )
+    );
+    val logUrl = { url: String => println(url); }
+    val result = scrape(list, logUrl);
+  */
+
+  def scrape(list: Seq[(String, Seq[StartEndIndex])], logUrl: String => Unit):
+    Seq[TrainStationTimeTable] = {
+
+    var isFirst = true;
+    val doGet = { url: String =>
+      if(isFirst){
+        isFirst = false;
+      } else {
+        Thread.sleep(2000);
+      }
+      logUrl(url);
+      WebBrowser.doGet(url);
+    }
+
+    val result: Seq[TrainStationTimeTable] =
+      list.map { case (url, startEndList) =>
+        val r1: Seq[IndexedSeq[(TrainTimePair, Option[String])]] =
+          scrape(url, startEndList, doGet);
+        val r2: Seq[TrainStationTimeTable] =
+          (startEndList zip r1).map { case (startEndIndex, r) =>
+            TrainStationTimeTable(startEndIndex.startStation, startEndIndex.endStation,
+              r.map(t => (t._1, "")));
+          }
+        r2;
+      }.flatten;
+
+    result;
+
+  }
 
   def scrape(url: String, startEndList: Seq[StartEndIndex]):
     Seq[IndexedSeq[(TrainTimePair, Option[String])]] = {
