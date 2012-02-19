@@ -66,7 +66,6 @@ object WebBrowser {
         Map("a" -> "AAA"));
       val page4 = browser.doPost("https://member.livedoor.com/login/index",
         Map("livedoor_id" -> "testid", "password" -> "testpw"));
-      Nil;
       List(
         assertEquals(true, page1.isInstanceOf[HtmlPage]),
         assertEquals("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n", page1.asInstanceOf[HtmlPage].source.substring(0, 103)),
