@@ -1,4 +1,6 @@
-package hydrocul.hv.rosen;
+package hydrocul.hv.rosen.search;
+
+import hydrocul.hv.rosen.TrainTime;
 
 trait RouteLink {
 
