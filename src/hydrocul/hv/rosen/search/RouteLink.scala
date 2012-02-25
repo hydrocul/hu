@@ -10,18 +10,10 @@ trait RouteLink {
 
 	def startTime: TrainTime;
 
-	def endTime: TrainTime;
+	def endTime1: TrainTime;
 
 	def endTime2: TrainTime;
 
-	def mkString(tail: String): String;
-
-}
-
-object RouteLink {
-
-	def unapply(r: RouteLink): Option[(String, String,
-		TrainTime, TrainTime, TrainTime)] = Some(
-		r.startPoint, r.endPoint, r.startTime, r.endTime, r.endTime2);
+	def mkString(tail: String, color: Boolean): String;
 
 }
