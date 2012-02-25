@@ -46,4 +46,3 @@ object TrainTime {
 	private val TrainTimeFormat = "(\\d\\d):(\\d\\d)".r;
 
 }
-

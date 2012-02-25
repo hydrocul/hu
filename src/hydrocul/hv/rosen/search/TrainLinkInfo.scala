@@ -7,7 +7,7 @@ case class TrainLinkInfo (
   endStation: String,
   startPoint: String,
   endPoint: String,
-  timePairs: IndexedSeq[TrainTimePair],
+  timePairs: Seq[TrainTimePair],
   walkingFromOffice: Boolean,
     // 会社から最寄り駅までの徒歩ルートを表す場合に true。
     // この場合、実際には電車ではなく徒歩。
@@ -24,10 +24,8 @@ case class TrainLinkInfo (
       a3;
     } else {
       val a4 = (a2 :+ a3.head); // time1 以降の電車で time2 以降の最初の電車まで
-      val a5 = a4.max(new Ordering[TrainTimePair]{
-        def compare(x: TrainTimePair, y: TrainTimePair): Int = x.end - y.end;
-      }); // a4 の中で到着が最も遅い電車の到着時刻
-      val a6 = a3.tail.filter(_.end <= a5.end); // tim2 以降の電車で、a5 と同じかより早い電車
+      val a5 = a4.map(_.end).max; // a4 の中で到着が最も遅い電車の到着時刻
+      val a6 = a3.tail.filter(_.end <= a5); // time2 以降の電車で、a5 と同じかより早い電車
       a4 ++ a6;
     }
     a7.sortWith(_.end < _.end).map(timePair => {
