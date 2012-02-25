@@ -8,7 +8,7 @@ trait LinkInfo {
 
 	def endPoint: String;
 
-	def getRouteLinks(time1: TrainTime, time2: TrainTime): IndexedSeq[RouteLink];
+	def getRouteLinks(time1: TrainTime, time2: TrainTime): Seq[RouteLink];
 
 }
 

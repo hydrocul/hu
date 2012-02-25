@@ -15,7 +15,7 @@ case class TrainLinkInfo (
 ) extends LinkInfo {
 
   override def getRouteLinks(time1: TrainTime,
-                             time2: TrainTime): IndexedSeq[RouteLink] = {
+                             time2: TrainTime): Seq[RouteLink] = {
     val a1 = timePairs.sortWith(_.start < _.start).
       dropWhile(_.start < time1); // time1 以降の電車
     val a2 = a1.takeWhile(_.start < time2); // time1 以降で time2 より前の電車

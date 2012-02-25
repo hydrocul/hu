@@ -10,7 +10,7 @@ case class WalkingLinkInfo (
 ) extends LinkInfo {
 
   override def getRouteLinks(time1: TrainTime,
-                             time2: TrainTime): IndexedSeq[RouteLink] = {
+                             time2: TrainTime): Seq[RouteLink] = {
     Vector(WalkingRouteLink(time1, time1 + walkingTime1, time2 + walkingTime2))
   }
 
