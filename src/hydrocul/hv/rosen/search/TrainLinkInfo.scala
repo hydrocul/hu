@@ -13,7 +13,7 @@ case class TrainLinkInfo (
 ) extends LinkInfo {
 
   override def getRoute(endPoint: String,
-                        time1: TrainTime, time2: TrainTime,
+                        time1: TrainTime, time2: TrainTime, fromOffice: Boolean,
                         linkInfoList: String => Seq[LinkInfo]): Route = {
 
     // time1 以降の電車
@@ -24,14 +24,18 @@ case class TrainLinkInfo (
     val a2 = a1.takeWhile(_.start < time2);
 
     // time2 以降の電車
-    val a3 = a1.drop(a2.length);
+    val a3 = if(fromOffice){
+      a1.drop(a2.length).filter(_.start == time2);
+    } else {
+      a1.drop(a2.length);
+    }
 
     val a7 = if(a3.isEmpty){
-      a3;
+      a2;
     } else {
 
       // time1 以降の電車で time2 以降の最初の電車まで
-      val a4 = (a2 :+ a3.head);
+      val a4 = a2 :+ a3.head;
 
       // a4 の中で到着が最も遅い電車の到着時刻
       val a5 = a4.map(_.end).max;
@@ -51,7 +55,7 @@ case class TrainLinkInfo (
       val e1 = timePair.start;
       val e2 = timePair.end;
       val next = Route.search(this.endPoint, endPoint,
-        e2, e2, linkInfoList);
+        e2, e2, false, linkInfoList);
       if(next.isDefined){
         Some(TrainRoute(startStation, endStation, startPoint, endPoint,
           e1, e2, tokyoMetro, ss, next));
@@ -96,8 +100,8 @@ case class TrainRoute (
     }
     val h = {
       if(tokyoMetro) "=";
-      else if(color) Console.RED + "-" + Console.RESET;
-      else "-";
+      else if(color) Console.RED + "=" + Console.RESET;
+      else "=";
     }
     val StartStation = startStation;
     val s1 = prevStation match {

@@ -10,7 +10,7 @@ case class WalkingFromOfficeLinkInfo (
 ) extends LinkInfo {
 
   override def getRoute(endPoint: String,
-                        time1: TrainTime, time2: TrainTime,
+                        time1: TrainTime, time2: TrainTime, fromOffice: Boolean,
                         linkInfoList: String => Seq[LinkInfo]): Route = {
 
     // time1 以降の電車
@@ -24,7 +24,7 @@ case class WalkingFromOfficeLinkInfo (
     val a3 = a1.drop(a2.length);
 
     val a7 = if(a3.isEmpty){
-      a3;
+      a2;
     } else {
       a2 :+ a3.head;
     }
@@ -34,7 +34,7 @@ case class WalkingFromOfficeLinkInfo (
       val e1 = timePair.start;
       val e2 = timePair.end;
       val next = Route.search(this.endPoint, endPoint,
-        e2, e2, linkInfoList);
+        e2, e2, true, linkInfoList);
       if(next.isDefined){
         Some(WalkingFromOfficeRoute(startPoint, e1, e2, next));
       } else {

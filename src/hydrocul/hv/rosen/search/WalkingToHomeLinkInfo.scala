@@ -9,7 +9,7 @@ case class WalkingToHomeLinkInfo (
 ) extends LinkInfo {
 
   override def getRoute(endPoint: String,
-                        time1: TrainTime, time2: TrainTime,
+                        time1: TrainTime, time2: TrainTime, fromOffice: Boolean,
                         linkInfoList: String => Seq[LinkInfo]): Route = {
     if(endPoint != this.endPoint){
       NoRoute(startPoint);

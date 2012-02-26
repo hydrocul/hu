@@ -8,7 +8,7 @@ trait LinkInfo {
 
 	def endPoint: String;
 
-	def getRoute(endPoint: String, time1: TrainTime, time2: TrainTime,
+	def getRoute(endPoint: String, time1: TrainTime, time2: TrainTime, fromOffice: Boolean,
     linkInfoList: String => Seq[LinkInfo]): Route;
 
 }
