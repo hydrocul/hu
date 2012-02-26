@@ -49,7 +49,7 @@ case class TrainLinkInfo (
     val a8 = a7.sortWith(_.end < _.end).map(timePair => {
 
       // time2 より前で間に合うかどうかがわからない場合に true
-      val ss = timePair.start < time2;
+      val ss = timePair.start < time2 && !walkingFromOffice;
 
       val e1 = timePair.start;
       val e2 = timePair.end;
@@ -104,9 +104,10 @@ case class TrainLinkInfo (
         else if(color) Console.RED + "-" + Console.RESET;
         else "-";
       }
+      val StartStation = startStation;
       val s1 = prevStation match {
-        case None => "";
-        case Some(startStation) => "";
+        case None => startStation;
+        case Some(StartStation) => "";
         case _ => "-" + startStation;
       };
       val s2 = if(walkingFromOffice){
