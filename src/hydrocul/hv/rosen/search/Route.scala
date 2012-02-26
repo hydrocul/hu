@@ -18,40 +18,11 @@ trait Route {
 
 object Route {
 
-  object NoRoute extends Route {
+  private def terminator(time1: TrainTime, time2: TrainTime): Route =
+    TerminatorRoute(time1, time2);
 
-    override def endTime1: Option[TrainTime] = None;
-
-    override def endTime2: Option[TrainTime] = None;
-
-    override def mkString(prevStation: Option[String], color: Boolean): Seq[String] =
-      "" :: Nil;
-
-  }
-
-  private def terminator(time1: TrainTime, time2: TrainTime) = new Route {
-
-    override def endTime1: Option[TrainTime] = Some(time1);
-
-    override def endTime2: Option[TrainTime] = Some(time2);
-
-    override def mkString(prevStation: Option[String], color: Boolean): Seq[String] =
-      "" :: Nil;
-
-  }
-
-  private def selectable(routeList: Seq[Route]) =
-    if(routeList.isEmpty) Route.NoRoute; else new Route {
-
-    lazy val endTime1: Option[TrainTime] = Some(routeList.map(_.endTime1.get).min);
-
-    lazy val endTime2: Option[TrainTime] = Some(routeList.map(_.endTime2.get).max);
-
-    override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
-      routeList.flatMap(_.mkString(prevStation, color));
-    }
-
-  }
+  private def selectable(routeList: Seq[Route]): Route =
+    if(routeList.isEmpty) NoRoute; else SelectableRoute(routeList);
 
   def search(startPoint: String, endPoint: String,
              time1: TrainTime, time2: TrainTime,
@@ -79,35 +50,37 @@ object Route {
 
 }
 
+object NoRoute extends Route {
 
+  override def endTime1: Option[TrainTime] = None;
 
-/*
-case class RouteParallel(link: RouteLink, nextRoutes: Seq[Route]){
+  override def endTime2: Option[TrainTime] = None;
 
-  lazy val endTime1: TrainTime = nextRoutes.map(_.endTime1).min;
+  override def mkString(prevStation: Option[String], color: Boolean): Seq[String] =
+    "" :: Nil;
 
-  lazy val endTime2: TrainTime = nextRoutes.map(_.endTime2).max;
+}
 
-  def mkString(color: Boolean): Seq[Seq[String]] = {
-    
+case class TerminatorRoute(time1: TrainTime, time2: TrainTime) extends Route {
+
+  override def endTime1: Option[TrainTime] = Some(time1);
+
+  override def endTime2: Option[TrainTime] = Some(time2);
+
+  override def mkString(prevStation: Option[String], color: Boolean): Seq[String] =
+    "" :: Nil;
+
+}
+
+case class SelectableRoute(routeList: Seq[Route]) extends Route {
+
+  lazy val endTime1: Option[TrainTime] = Some(routeList.map(_.endTime1.get).min);
+
+  lazy val endTime2: Option[TrainTime] = Some(routeList.map(_.endTime2.get).max);
+
+  override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
+    routeList.flatMap(_.mkString(prevStation, color));
   }
 
 }
-*/
 
-/*
-case class Route(links: List[RouteLink]){
-
-  def endTime1 = links.last.endTime1;
-
-  def endTime2 = links.last.endTime2;
-
-  def mkString(color: Boolean): String = {
-    links match {
-      case Nil => "";
-      case head :: tail => head.mkString(Route(tail).mkString(color), color);
-    }
-  }
-
-}
-*/

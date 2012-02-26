@@ -19,7 +19,7 @@ case class WalkingLinkInfo (
     if(next.isDefined){
       WalkingRoute(next);
     } else {
-      Route.NoRoute;
+      NoRoute;
     }
   }
 

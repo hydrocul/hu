@@ -12,7 +12,7 @@ case class WalkingToHomeLinkInfo (
                         time1: TrainTime, time2: TrainTime,
                         linkInfoList: String => Seq[LinkInfo]): Route = {
     if(endPoint != this.endPoint){
-      Route.NoRoute;
+      NoRoute;
     } else {
       WalkingToHomeRoute(time1 + walkingTime);
     }

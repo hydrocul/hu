@@ -62,7 +62,7 @@ case class TrainLinkInfo (
           TrainRoute(startStation, endStation, e1, e2, tokyoMetro, ss, next);
         }
       } else {
-        Route.NoRoute;
+        NoRoute;
       }
 
     })
@@ -74,7 +74,7 @@ case class TrainLinkInfo (
   }
 
   private def trainRouteList(routeList: Seq[Route]) =
-    if(routeList.isEmpty) Route.NoRoute; else TrainRouteList(routeList);
+    if(routeList.isEmpty) NoRoute; else TrainRouteList(routeList);
 
 }
 
