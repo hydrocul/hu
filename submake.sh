@@ -79,9 +79,9 @@ _buildlib_compile_sub1()
   rm build2.tmp
 
   if [ -s build_java2.tmp ] ; then
-    echo "javac -classpath ./class:./lib/* -sourcepath $1/src -d $1/class"
+    echo "javac -classpath ./class:./lib/*:$SCALA_HOME/lib/* -sourcepath $1/src -d $1/class"
     cat build_java2.tmp
-    javac -classpath ./class:./lib/* -sourcepath $1/src -d $1/class @build_java2.tmp
+    javac -classpath ./class:./lib/*:$SCALA_HOME/lib/* -sourcepath $1/src -d $1/class @build_java2.tmp
 
     if [ $? -ne 0 ] ; then
       rm build_java2.tmp

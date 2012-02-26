@@ -1,6 +1,7 @@
 package hydrocul.hv.rosen.search;
 
 import hydrocul.hv.rosen._;
+import hydrocul.util.StringLib;
 
 case class TrainLinkInfo (
   startStation: String,
@@ -14,40 +15,86 @@ case class TrainLinkInfo (
   tokyoMetro: Boolean
 ) extends LinkInfo {
 
-  override def getRouteLinks(time1: TrainTime,
-                             time2: TrainTime): Seq[RouteLink] = {
+  override def getRoute(endPoint: String,
+                        time1: TrainTime, time2: TrainTime,
+                        linkInfoList: String => Seq[LinkInfo]): Route = {
+
+    // time1 以降の電車
     val a1 = timePairs.sortWith(_.start < _.start).
-      dropWhile(_.start < time1); // time1 以降の電車
-    val a2 = a1.takeWhile(_.start < time2); // time1 以降で time2 より前の電車
-    val a3 = a1.drop(a2.length); // time2 以降の電車
+      dropWhile(_.start < time1);
+
+    // time1 以降で time2 より前の電車
+    val a2 = a1.takeWhile(_.start < time2);
+
+    // time2 以降の電車
+    val a3 = a1.drop(a2.length);
+
     val a7 = if(a3.isEmpty){
       a3;
     } else {
-      val a4 = (a2 :+ a3.head); // time1 以降の電車で time2 以降の最初の電車まで
-      val a5 = a4.map(_.end).max; // a4 の中で到着が最も遅い電車の到着時刻
-      val a6 = a3.tail.filter(_.end <= a5); // time2 以降の電車で、a5 と同じかより早い電車
+
+      // time1 以降の電車で time2 以降の最初の電車まで
+      val a4 = (a2 :+ a3.head);
+
+      // a4 の中で到着が最も遅い電車の到着時刻
+      val a5 = a4.map(_.end).max;
+
+      // time2 以降の電車で、a5 と同じかより早い電車
+      val a6 = a3.tail.filter(_.end <= a5);
+
       a4 ++ a6;
+
     }
-    a7.sortWith(_.end < _.end).map(timePair => {
-      val ss = timePair.start < time2; // time2 より前で間に合うかどうかがわからない場合に true
-      TrainRouteLink(timePair.start, timePair.end, ss)
+
+    val a8 = a7.sortWith(_.end < _.end).map(timePair => {
+
+      // time2 より前で間に合うかどうかがわからない場合に true
+      val ss = timePair.start < time2;
+
+      val e1 = timePair.start;
+      val e2 = timePair.end;
+      val next = Route.search(this.endPoint, endPoint,
+        e2, e2, linkInfoList);
+      if(next.isDefined){
+        TrainRoute(e1, e2, ss, next);
+      } else {
+        Route.NoRoute;
+      }
+
     })
+
+    val a9 = a8.filter(_.isDefined);
+
+    trainRouteList(a9);
+
   }
 
-  private case class TrainRouteLink (
+  private def trainRouteList(routeList: Seq[Route]) =
+    if(routeList.isEmpty) Route.NoRoute; else new Route {
+
+    lazy val endTime1: Option[TrainTime] = Some(routeList.map(_.endTime1.get).min);
+
+    lazy val endTime2: Option[TrainTime] = Some(routeList.map(_.endTime2.get).max);
+
+    override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
+      routeList.flatMap(_.mkString(prevStation, color));
+    }
+
+  }
+
+  private case class TrainRoute (
     startTime: TrainTime,
-    endTime1: TrainTime,
-    second: Boolean // time2 より前で間に合うかどうかがわからない場合に true
-  ) extends RouteLink {
+    endTime: TrainTime,
+    second: Boolean, // time2 より前で間に合うかどうかがわからない場合に true
+    nextRoute: Route
+  ) extends Route {
 
-    override def startPoint: String = TrainLinkInfo.this.startPoint;
+    override def endTime1: Option[TrainTime] = nextRoute.endTime1;
 
-    override def endPoint: String = TrainLinkInfo.this.endPoint;
+    override def endTime2: Option[TrainTime] = nextRoute.endTime2;
 
-    override def endTime2: TrainTime = endTime1;
-
-    override def mkString(tail: String, color: Boolean): String = {
-      val t = {
+    override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
+      val start = {
         if(second && color) Console.RED + startTime + Console.RESET;
         else startTime.toString;
       }
@@ -57,12 +104,24 @@ case class TrainLinkInfo (
         else if(color) Console.RED + "-" + Console.RESET;
         else "-";
       }
-      if(walkingFromOffice){
-        startStation + "(" + t + ")" + h + tail;
-      } else if(tail.startsWith(endStation)){
-        startStation + "(" + t + ")" + h + "(" + endTime1 + ")" + tail;
+      val s1 = prevStation match {
+        case None => "";
+        case Some(startStation) => "";
+        case _ => "-" + startStation;
+      };
+      val s2 = if(walkingFromOffice){
+        (s1 + "(" + start + ")" + h, None);
       } else {
-        startStation + "(" + t + ")" + h + "(" + endTime1 + ")" + endStation + "-" + tail;
+        (s1 + "(" + start + ")" + h + "(" + endTime + ")" + endStation, Some(endStation));
+      }
+      val next = nextRoute.mkString(s2._2, color);
+      if(next.isEmpty){
+        Nil;
+      } else {
+        val h = s2._1 + next.head;
+        val s = Vector.fill(StringLib.lengthOnTerminal(s2._1))(" ").mkString;
+        val t = next.tail.map(s + _);
+        h :: t.toList;
       }
     }
 

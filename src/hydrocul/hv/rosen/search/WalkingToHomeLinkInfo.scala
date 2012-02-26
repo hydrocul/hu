@@ -8,30 +8,30 @@ case class WalkingToHomeLinkInfo (
   walkingTime: Int
 ) extends LinkInfo {
 
-  override def getRouteLinks(time: TrainTime,
-                             time2: TrainTime): Seq[RouteLink] = {
-    Vector(WalkingToHomeRouteLink(time, time + walkingTime))
+  override def getRoute(endPoint: String,
+                        time1: TrainTime, time2: TrainTime,
+                        linkInfoList: String => Seq[LinkInfo]): Route = {
+    if(endPoint != this.endPoint){
+      Route.NoRoute;
+    } else {
+      WalkingToHomeRoute(time1 + walkingTime);
+    }
   }
 
-  private case class WalkingToHomeRouteLink (
-    startTime: TrainTime,
-    endTime1: TrainTime
-  ) extends RouteLink {
+  private case class WalkingToHomeRoute (
+    endTime: TrainTime
+  ) extends Route {
 
-    override def startPoint: String = WalkingToHomeLinkInfo.this.startPoint;
+    override def endTime1: Option[TrainTime] = Some(endTime);
 
-    override def endPoint: String = WalkingToHomeLinkInfo.this.endPoint;
+    override def endTime2: Option[TrainTime] = Some(endTime);
 
-    override def endTime2: TrainTime = endTime1;
-
-    override def mkString(tail: String, color: Boolean): String = {
-      if(!tail.isEmpty)
-        throw new IllegalArgumentException(tail);
-      val t = {
-        if(color) Console.BLUE + endTime1 + Console.RESET;
-        else endTime1.toString;
+    override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
+      val end = {
+        if(color) Console.BLUE + endTime + Console.RESET;
+        else endTime.toString;
       }
-      "-(" + t + ")" + tail;
+      "-(" + end + ")" :: Nil;
     }
 
   }

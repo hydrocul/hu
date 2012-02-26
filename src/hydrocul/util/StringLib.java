@@ -414,6 +414,15 @@ public class StringLib {
 		return p0 * 4096 + p1 * 256 + p2 * 16 + p3;
 	}
 	
+	public static int lengthOnTerminal(String str){
+    String str2 = new scala.collection.immutable.StringOps("\u001B[^m]*m").r().replaceAllIn(str, "");
+    try {
+      return str2.getBytes("SJIS").length;
+    } catch(UnsupportedEncodingException e){
+      throw new AssertionError(e);
+    }
+	}
+	
 	public static String[] parseArgs(String args){
 		
 		ArrayList<String> ret = new ArrayList<String>();

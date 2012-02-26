@@ -9,22 +9,31 @@ case class WalkingLinkInfo (
   walkingTime2: Int
 ) extends LinkInfo {
 
-  override def getRouteLinks(time1: TrainTime,
-                             time2: TrainTime): Seq[RouteLink] = {
-    Vector(WalkingRouteLink(time1, time1 + walkingTime1, time2 + walkingTime2))
+  override def getRoute(endPoint: String,
+                        time1: TrainTime, time2: TrainTime,
+                        linkInfoList: String => Seq[LinkInfo]): Route = {
+    val e1 = time1 + walkingTime1;
+    val e2 = time2 + walkingTime2;
+    val next = Route.search(this.endPoint, endPoint,
+      e1, e2, linkInfoList);
+    if(next.isDefined){
+      WalkingRoute(next);
+    } else {
+      Route.NoRoute;
+    }
   }
 
-  private case class WalkingRouteLink (
-    startTime: TrainTime,
-    endTime1: TrainTime,
-    endTime2: TrainTime
-  ) extends RouteLink {
+  private case class WalkingRoute (
+    nextRoute: Route
+  ) extends Route {
 
-    override def startPoint: String = WalkingLinkInfo.this.startPoint;
+    override def endTime1: Option[TrainTime] = nextRoute.endTime1;
 
-    override def endPoint: String = WalkingLinkInfo.this.endPoint;
+    override def endTime2: Option[TrainTime] = nextRoute.endTime2;
 
-    override def mkString(tail: String, color: Boolean): String = tail;
+    override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
+      nextRoute.mkString(prevStation, color);
+    }
 
   }
 

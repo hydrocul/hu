@@ -1,5 +1,6 @@
 package hydrocul.hv.rosen.search;
 
+/*
 import hydrocul.hv.rosen.TrainTime;
 
 trait RouteLink {
@@ -14,6 +15,8 @@ trait RouteLink {
 
 	def endTime2: TrainTime;
 
-	def mkString(tail: String, color: Boolean): String;
+	def mkString(prevStation: Option[String], color: Boolean):
+    (String, Int, Option[String]);
 
 }
+*/

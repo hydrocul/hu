@@ -1,5 +1,6 @@
 package hydrocul.hv.rosen.search;
 
+/*
 import hydrocul.hv.rosen._;
 
 case class LinkInfoList(list: Seq[LinkInfo]){
@@ -44,3 +45,4 @@ case class LinkInfoList(list: Seq[LinkInfo]){
   }
 
 }
+*/
