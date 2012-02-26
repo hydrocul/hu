@@ -6,6 +6,8 @@ trait Route {
 
   def isDefined: Boolean = endTime1.isDefined;
 
+  def startPoint: String;
+
   def endTime1: Option[TrainTime];
 
   def endTime2: Option[TrainTime];
@@ -14,22 +16,25 @@ trait Route {
 
   def mkString(prevStation: Option[String], color: Boolean): Seq[String];
 
+  def update(p: Route => Route): Route;
+
 }
 
 object Route {
 
-  private def terminator(time1: TrainTime, time2: TrainTime): Route =
-    TerminatorRoute(time1, time2);
+  private def terminator(startPoint: String, time1: TrainTime, time2: TrainTime): Route =
+    TerminatorRoute(startPoint, time1, time2);
 
-  private def selectable(routeList: Seq[Route]): Route =
-    if(routeList.isEmpty) NoRoute; else SelectableRoute(routeList);
+  private def selectable(startPoint: String, routeList: Seq[Route]): Route =
+    if(routeList.isEmpty) NoRoute(startPoint);
+    else SelectableRoute(startPoint, routeList);
 
   def search(startPoint: String, endPoint: String,
              time1: TrainTime, time2: TrainTime,
              linkInfoList: String => Seq[LinkInfo]): Route = {
 
     if(startPoint == endPoint){
-      terminator(time1, time2);
+      terminator(startPoint, time1, time2);
     } else {
 
       // 次に接続する Route のリスト
@@ -42,7 +47,7 @@ object Route {
       // 早く到着する順番に並び替える
       val a3 = a2.sortBy(_.endTime1.get);
 
-      selectable(a3);
+      selectable(startPoint, a3);
 
     }
 
@@ -50,7 +55,7 @@ object Route {
 
 }
 
-object NoRoute extends Route {
+case class NoRoute(startPoint: String) extends Route {
 
   override def endTime1: Option[TrainTime] = None;
 
@@ -59,9 +64,11 @@ object NoRoute extends Route {
   override def mkString(prevStation: Option[String], color: Boolean): Seq[String] =
     "" :: Nil;
 
+  override def update(p: Route => Route): Route = p(this);
+
 }
 
-case class TerminatorRoute(time1: TrainTime, time2: TrainTime) extends Route {
+case class TerminatorRoute(startPoint: String, time1: TrainTime, time2: TrainTime) extends Route {
 
   override def endTime1: Option[TrainTime] = Some(time1);
 
@@ -70,9 +77,11 @@ case class TerminatorRoute(time1: TrainTime, time2: TrainTime) extends Route {
   override def mkString(prevStation: Option[String], color: Boolean): Seq[String] =
     "" :: Nil;
 
+  override def update(p: Route => Route): Route = p(this);
+
 }
 
-case class SelectableRoute(routeList: Seq[Route]) extends Route {
+case class SelectableRoute(startPoint: String, routeList: Seq[Route]) extends Route {
 
   lazy val endTime1: Option[TrainTime] = Some(routeList.map(_.endTime1.get).min);
 
@@ -81,6 +90,9 @@ case class SelectableRoute(routeList: Seq[Route]) extends Route {
   override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
     routeList.flatMap(_.mkString(prevStation, color));
   }
+
+  override def update(p: Route => Route): Route =
+    p(SelectableRoute(startPoint, routeList.map(_.update(p))));
 
 }
 

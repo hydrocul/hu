@@ -17,15 +17,16 @@ case class WalkingLinkInfo (
     val next = Route.search(this.endPoint, endPoint,
       e1, e2, linkInfoList);
     if(next.isDefined){
-      WalkingRoute(next);
+      WalkingRoute(startPoint, next);
     } else {
-      NoRoute;
+      NoRoute(startPoint);
     }
   }
 
 }
 
 case class WalkingRoute (
+  startPoint: String,
   nextRoute: Route
 ) extends Route {
 
@@ -36,6 +37,9 @@ case class WalkingRoute (
   override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
     nextRoute.mkString(prevStation, color);
   }
+
+  override def update(p: Route => Route): Route =
+    p(WalkingRoute(startPoint, nextRoute.update(p)));
 
 }
 

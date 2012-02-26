@@ -12,15 +12,16 @@ case class WalkingToHomeLinkInfo (
                         time1: TrainTime, time2: TrainTime,
                         linkInfoList: String => Seq[LinkInfo]): Route = {
     if(endPoint != this.endPoint){
-      NoRoute;
+      NoRoute(startPoint);
     } else {
-      WalkingToHomeRoute(time1 + walkingTime);
+      WalkingToHomeRoute(startPoint, time1 + walkingTime);
     }
   }
 
 }
 
 case class WalkingToHomeRoute (
+  startPoint: String,
   endTime: TrainTime
 ) extends Route {
 
@@ -35,6 +36,8 @@ case class WalkingToHomeRoute (
     }
     "-(" + end + ")" :: Nil;
   }
+
+  override def update(p: Route => Route): Route = p(this);
 
 }
 
