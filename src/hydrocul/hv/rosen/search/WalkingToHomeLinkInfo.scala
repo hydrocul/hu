@@ -18,22 +18,23 @@ case class WalkingToHomeLinkInfo (
     }
   }
 
-  private case class WalkingToHomeRoute (
-    endTime: TrainTime
-  ) extends Route {
+}
 
-    override def endTime1: Option[TrainTime] = Some(endTime);
+case class WalkingToHomeRoute (
+  endTime: TrainTime
+) extends Route {
 
-    override def endTime2: Option[TrainTime] = Some(endTime);
+  override def endTime1: Option[TrainTime] = Some(endTime);
 
-    override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
-      val end = {
-        if(color) Console.BLUE + endTime + Console.RESET;
-        else endTime.toString;
-      }
-      "-(" + end + ")" :: Nil;
+  override def endTime2: Option[TrainTime] = Some(endTime);
+
+  override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
+    val end = {
+      if(color) Console.BLUE + endTime + Console.RESET;
+      else endTime.toString;
     }
-
+    "-(" + end + ")" :: Nil;
   }
 
 }
+

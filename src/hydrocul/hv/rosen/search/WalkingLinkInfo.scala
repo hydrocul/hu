@@ -23,18 +23,19 @@ case class WalkingLinkInfo (
     }
   }
 
-  private case class WalkingRoute (
-    nextRoute: Route
-  ) extends Route {
+}
 
-    override def endTime1: Option[TrainTime] = nextRoute.endTime1;
+case class WalkingRoute (
+  nextRoute: Route
+) extends Route {
 
-    override def endTime2: Option[TrainTime] = nextRoute.endTime2;
+  override def endTime1: Option[TrainTime] = nextRoute.endTime1;
 
-    override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
-      nextRoute.mkString(prevStation, color);
-    }
+  override def endTime2: Option[TrainTime] = nextRoute.endTime2;
 
+  override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
+    nextRoute.mkString(prevStation, color);
   }
 
 }
+

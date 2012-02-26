@@ -49,14 +49,18 @@ case class TrainLinkInfo (
     val a8 = a7.sortWith(_.end < _.end).map(timePair => {
 
       // time2 より前で間に合うかどうかがわからない場合に true
-      val ss = timePair.start < time2 && !walkingFromOffice;
+      val ss = timePair.start < time2;
 
       val e1 = timePair.start;
       val e2 = timePair.end;
       val next = Route.search(this.endPoint, endPoint,
         e2, e2, linkInfoList);
       if(next.isDefined){
-        TrainRoute(e1, e2, ss, next);
+        if(walkingFromOffice){
+          WalkingFromOfficeRoute(startStation, endStation, e1, e2, next);
+        } else {
+          TrainRoute(startStation, endStation, e1, e2, tokyoMetro, ss, next);
+        }
       } else {
         Route.NoRoute;
       }
@@ -70,62 +74,97 @@ case class TrainLinkInfo (
   }
 
   private def trainRouteList(routeList: Seq[Route]) =
-    if(routeList.isEmpty) Route.NoRoute; else new Route {
+    if(routeList.isEmpty) Route.NoRoute; else TrainRouteList(routeList);
 
-    lazy val endTime1: Option[TrainTime] = Some(routeList.map(_.endTime1.get).min);
+}
 
-    lazy val endTime2: Option[TrainTime] = Some(routeList.map(_.endTime2.get).max);
+case class TrainRoute (
+  startStation: String,
+  endStation: String,
+  startTime: TrainTime,
+  endTime: TrainTime,
+  tokyoMetro: Boolean,
+  second: Boolean, // time2 より前で間に合うかどうかがわからない場合に true
+  nextRoute: Route
+) extends Route {
 
-    override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
-      routeList.flatMap(_.mkString(prevStation, color));
+  override def endTime1: Option[TrainTime] = nextRoute.endTime1;
+
+  override def endTime2: Option[TrainTime] = nextRoute.endTime2;
+
+  override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
+    val start = {
+      if(second && color) Console.RED + startTime + Console.RESET;
+      else startTime.toString;
     }
-
+    val h = {
+      if(tokyoMetro) "=";
+      else if(color) Console.RED + "-" + Console.RESET;
+      else "-";
+    }
+    val StartStation = startStation;
+    val s1 = prevStation match {
+      case None => startStation;
+      case Some(StartStation) => "";
+      case _ => "-" + startStation;
+    };
+    val s2 = s1 + "(" + start + ")" + h + "(" + endTime + ")" + endStation;
+    val next = nextRoute.mkString(Some(endStation), color);
+    if(next.isEmpty){
+      Nil;
+    } else {
+      val h = s2 + next.head;
+      val s = Vector.fill(StringLib.lengthOnTerminal(s2))(" ").mkString;
+      val t = next.tail.map(s + _);
+      h :: t.toList;
+    }
   }
 
-  private case class TrainRoute (
-    startTime: TrainTime,
-    endTime: TrainTime,
-    second: Boolean, // time2 より前で間に合うかどうかがわからない場合に true
-    nextRoute: Route
-  ) extends Route {
+}
 
-    override def endTime1: Option[TrainTime] = nextRoute.endTime1;
+case class TrainRouteList(routeList: Seq[Route]) extends Route {
 
-    override def endTime2: Option[TrainTime] = nextRoute.endTime2;
+  lazy val endTime1: Option[TrainTime] = Some(routeList.map(_.endTime1.get).min);
 
-    override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
-      val start = {
-        if(second && color) Console.RED + startTime + Console.RESET;
-        else startTime.toString;
-      }
-      val h = {
-        if(walkingFromOffice) "=";
-        else if(tokyoMetro) "=";
-        else if(color) Console.RED + "-" + Console.RESET;
-        else "-";
-      }
-      val StartStation = startStation;
-      val s1 = prevStation match {
-        case None => startStation;
-        case Some(StartStation) => "";
-        case _ => "-" + startStation;
-      };
-      val s2 = if(walkingFromOffice){
-        (s1 + "(" + start + ")" + h, None);
-      } else {
-        (s1 + "(" + start + ")" + h + "(" + endTime + ")" + endStation, Some(endStation));
-      }
-      val next = nextRoute.mkString(s2._2, color);
-      if(next.isEmpty){
-        Nil;
-      } else {
-        val h = s2._1 + next.head;
-        val s = Vector.fill(StringLib.lengthOnTerminal(s2._1))(" ").mkString;
-        val t = next.tail.map(s + _);
-        h :: t.toList;
-      }
+  lazy val endTime2: Option[TrainTime] = Some(routeList.map(_.endTime2.get).max);
+
+  override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
+    routeList.flatMap(_.mkString(prevStation, color));
+  }
+
+}
+
+case class WalkingFromOfficeRoute (
+  startStation: String,
+  endStation: String,
+  startTime: TrainTime,
+  endTime: TrainTime,
+  nextRoute: Route
+) extends Route {
+
+  override def endTime1: Option[TrainTime] = nextRoute.endTime1;
+
+  override def endTime2: Option[TrainTime] = nextRoute.endTime2;
+
+  override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
+    val start = startTime.toString;
+    val h = "="
+    val StartStation = startStation;
+    val s1 = prevStation match {
+      case None => startStation;
+      case Some(StartStation) => "";
+      case _ => "-" + startStation;
+    };
+    val s2 = s1 + "(" + start + ")" + h;
+    val next = nextRoute.mkString(None, color);
+    if(next.isEmpty){
+      Nil;
+    } else {
+      val h = s2 + next.head;
+      val s = Vector.fill(StringLib.lengthOnTerminal(s2))(" ").mkString;
+      val t = next.tail.map(s + _);
+      h :: t.toList;
     }
-
   }
 
 }
