@@ -29,6 +29,8 @@ case class WalkingToHomeRoute (
 
   override def endTime2: Option[TrainTime] = Some(endTime);
 
+  override def endTime3: Option[TrainTime] = Some(endTime);
+
   override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
     val end = {
       if(color) Console.BLUE + endTime + Console.RESET;

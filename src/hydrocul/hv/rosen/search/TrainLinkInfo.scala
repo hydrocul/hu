@@ -93,6 +93,8 @@ case class TrainRoute (
 
   override def endTime2: Option[TrainTime] = nextRoute.endTime2;
 
+  override def endTime3: Option[TrainTime] = nextRoute.endTime3;
+
   override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
     val start = {
       if(second && color) Console.RED + startTime + Console.RESET;
@@ -135,9 +137,14 @@ case class TrainRouteList (
   list: Seq[TrainRoute]
 ) extends Route {
 
-  lazy val endTime1: Option[TrainTime] = Some(list.map(_.endTime1.get).min);
+  lazy val endTime1: Option[TrainTime] =
+    Some(list.map(_.endTime1.get).min);
 
-  lazy val endTime2: Option[TrainTime] = Some(list.map(_.endTime2.get).max);
+  lazy val endTime2: Option[TrainTime] =
+    Some(list.filter(!_.second).map(_.endTime2.get).min);
+
+  lazy val endTime3: Option[TrainTime] =
+    Some(list.map(_.endTime3.get).max);
 
   override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
     list.flatMap(_.mkString(prevStation, color));

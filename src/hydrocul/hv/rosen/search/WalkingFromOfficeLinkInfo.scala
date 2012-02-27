@@ -65,6 +65,8 @@ case class WalkingFromOfficeRoute (
 
   override def endTime2: Option[TrainTime] = nextRoute.endTime2;
 
+  override def endTime3: Option[TrainTime] = nextRoute.endTime3;
+
   override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
     val start = startTime.toString;
     val h = "-"
@@ -93,7 +95,9 @@ case class WalkingFromOfficeRouteList (
 
   lazy val endTime1: Option[TrainTime] = Some(list.map(_.endTime1.get).min);
 
-  lazy val endTime2: Option[TrainTime] = Some(list.map(_.endTime2.get).max);
+  lazy val endTime2: Option[TrainTime] = Some(list.map(_.endTime2.get).min);
+
+  lazy val endTime3: Option[TrainTime] = Some(list.map(_.endTime3.get).max);
 
   override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
     list.flatMap(_.mkString(prevStation, color));
