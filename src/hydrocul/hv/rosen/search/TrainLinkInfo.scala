@@ -140,8 +140,14 @@ case class TrainRouteList (
   lazy val endTime1: Option[TrainTime] =
     Some(list.map(_.endTime1.get).min);
 
-  lazy val endTime2: Option[TrainTime] =
-    Some(list.filter(!_.second).map(_.endTime2.get).min);
+  lazy val endTime2: Option[TrainTime] = {
+    val l = list.filter(!_.second);
+    if(l.isEmpty){
+      endTime3;
+    } else {
+      Some(l.map(_.endTime2.get).min);
+    }
+  }
 
   lazy val endTime3: Option[TrainTime] =
     Some(list.map(_.endTime3.get).max);
