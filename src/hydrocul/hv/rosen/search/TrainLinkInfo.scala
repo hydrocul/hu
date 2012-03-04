@@ -57,7 +57,7 @@ case class TrainLinkInfo (
       val next = Route.search(this.endPoint, endPoint,
         e2, e2, false, linkInfoList);
       if(next.isDefined){
-        Some(TrainRoute(startStation, endStation, startPoint, endPoint,
+        Some(TrainRoute(startStation, endStation, startPoint, this.endPoint,
           e1, e2, tokyoMetro, ss, next));
       } else {
         None;
@@ -134,14 +134,11 @@ case class TrainRouteList (
   endStation: String,
   startPoint: String,
   endPoint: String,
-  list: Seq[TrainRoute]
-) extends Route {
+  routeList: Seq[TrainRoute]
+) extends RouteList {
 
-  lazy val endTime1: Option[TrainTime] =
-    Some(list.map(_.endTime1.get).min);
-
-  lazy val endTime2: Option[TrainTime] = {
-    val l = list.filter(!_.second);
+  override lazy val endTime2: Option[TrainTime] = {
+    val l = routeList.filter(!_.second);
     if(l.isEmpty){
       endTime3;
     } else {
@@ -149,17 +146,10 @@ case class TrainRouteList (
     }
   }
 
-  lazy val endTime3: Option[TrainTime] =
-    Some(list.map(_.endTime3.get).max);
-
-  override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
-    list.flatMap(_.mkString(prevStation, color));
-  }
-
   override def update(p: Route => Route): Route = {
-    val newList = list.map(_.update(p));
+    val newList = routeList.map(_.update(p));
     if(newList.exists(!_.isInstanceOf[TrainRoute])){
-      p(SelectableRoute(startPoint, newList));
+      p(Route.selectable(startPoint, newList));
     } else {
       p(TrainRouteList(startStation, endStation, startPoint, endPoint,
         newList.asInstanceOf[Seq[TrainRoute]]));

@@ -27,9 +27,9 @@ object Route {
   private def terminator(startPoint: String, time1: TrainTime, time2: TrainTime): Route =
     TerminatorRoute(startPoint, time1, time2);
 
-  private def selectable(startPoint: String, routeList: Seq[Route]): Route =
+  def selectable(startPoint: String, routeList: Seq[Route]): Route =
     if(routeList.isEmpty) NoRoute(startPoint);
-    else SelectableRoute(startPoint, routeList);
+    else SelectableRouteList(startPoint, routeList);
 
   def search(startPoint: String, endPoint: String,
              time1: TrainTime, time2: TrainTime,
@@ -93,20 +93,48 @@ case class TerminatorRoute(startPoint: String, time1: TrainTime, time2: TrainTim
 
 }
 
-case class SelectableRoute(startPoint: String, routeList: Seq[Route]) extends Route {
+trait RouteList extends Route {
 
-  lazy val endTime1: Option[TrainTime] = Some(routeList.map(_.endTime1.get).min);
+  def routeList: Seq[Route];
 
-  lazy val endTime2: Option[TrainTime] = Some(routeList.map(_.endTime2.get).min);
+  override def startPoint: String;
 
-  lazy val endTime3: Option[TrainTime] = Some(routeList.map(_.endTime3.get).max);
+  override lazy val endTime1: Option[TrainTime] = {
+    if(routeList.isEmpty){
+      None;
+    } else {
+      Some(routeList.map(_.endTime1.get).min);
+    }
+  }
+
+  override lazy val endTime2: Option[TrainTime] = {
+    if(routeList.isEmpty){
+      None;
+    } else {
+      Some(routeList.map(_.endTime2.get).min);
+    }
+  }
+
+  override lazy val endTime3: Option[TrainTime] = {
+    if(routeList.isEmpty){
+      None;
+    } else {
+      Some(routeList.map(_.endTime3.get).max);
+    }
+  }
 
   override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
     routeList.flatMap(_.mkString(prevStation, color));
   }
 
+  override def update(p: Route => Route): Route = p(this);
+
+}
+
+case class SelectableRouteList(startPoint: String, routeList: Seq[Route]) extends RouteList {
+
   override def update(p: Route => Route): Route =
-    p(SelectableRoute(startPoint, routeList.map(_.update(p))));
+    p(SelectableRouteList(startPoint, routeList.map(_.update(p))));
 
 }
 

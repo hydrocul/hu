@@ -90,23 +90,13 @@ case class WalkingFromOfficeRoute (
 
 case class WalkingFromOfficeRouteList (
   startPoint: String,
-  list: Seq[WalkingFromOfficeRoute]
-) extends Route {
-
-  lazy val endTime1: Option[TrainTime] = Some(list.map(_.endTime1.get).min);
-
-  lazy val endTime2: Option[TrainTime] = Some(list.map(_.endTime2.get).min);
-
-  lazy val endTime3: Option[TrainTime] = Some(list.map(_.endTime3.get).max);
-
-  override def mkString(prevStation: Option[String], color: Boolean): Seq[String] = {
-    list.flatMap(_.mkString(prevStation, color));
-  }
+  routeList: Seq[WalkingFromOfficeRoute]
+) extends RouteList {
 
   override def update(p: Route => Route): Route = {
-    val newList = list.map(_.update(p));
+    val newList = routeList.map(_.update(p));
     if(newList.exists(!_.isInstanceOf[WalkingFromOfficeRoute])){
-      p(SelectableRoute(startPoint, newList));
+      p(Route.selectable(startPoint, newList));
     } else {
       p(WalkingFromOfficeRouteList(startPoint, newList.asInstanceOf[Seq[WalkingFromOfficeRoute]]));
     }
