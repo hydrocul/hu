@@ -4,8 +4,9 @@ package hydrocul.hv.http;
  * URLをパースした結果を保持するクラス。
  * URLの文字列に戻したときに正確に元のURLを再現できるように
  * パラメータの順序などの必要な情報を保持している。
+ * アンカーリンク("#")には対応していない。
  */
-private[http] case class UrlInfo (
+case class UrlInfo (
   scheme: String,
   usernameAndPassword: Option[(String, String)],
   host: String,
@@ -33,7 +34,7 @@ private[http] case class UrlInfo (
   }
 
   def requestPath: String = {
-    path +
+    (if(path.isEmpty) "/" else path) +
     query.map("?" + UrlInfo.queryToUrlEncoded(_)).getOrElse("");
   }
 
@@ -59,7 +60,7 @@ private[http] case class UrlInfo (
 
 }
 
-private[http] object UrlInfo {
+object UrlInfo {
 
   def apply(url: String): UrlInfo = {
     url match {

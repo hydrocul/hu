@@ -24,7 +24,7 @@ trait File {
 
 object File {
 
-  def apply(path: String): File = FileImpl(new jio.File(path), false);
+  def apply(path: String): File = FileImpl(new jio.File(path).getAbsoluteFile, false);
 
   def apply(): File = FileImpl(new jio.File("/"), true);
 
@@ -62,7 +62,7 @@ object File {
       bin match {
         case Some(bin) =>
           val parent = file.getParentFile;
-          if(!parent.exists){
+          if(parent != null && !parent.exists){
             parent.mkdirs();
           }
           val path = file.getPath;
