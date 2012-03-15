@@ -58,7 +58,7 @@ private[wwget] case class CmdOptBuilder (
   def parse(args: List[String]): CmdOpt = {
     (this, args) match {
       case (_, Nil) => build;
-      case (CmdOptBuilder(url, None, selector), "-O" :: ofname :: tail) =>
+      case (CmdOptBuilder(url, None, selector), "--out" :: ofname :: tail) =>
         CmdOptBuilder(url, Some(CmdOpt.FileOutput(ofname)), selector).parse(tail);
       case (CmdOptBuilder(url, None, selector), "--stdout" :: tail) =>
         CmdOptBuilder(url, Some(CmdOpt.StdOutput), selector).parse(tail);

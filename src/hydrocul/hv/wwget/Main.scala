@@ -55,7 +55,10 @@ object Main {
   def help(){
     println("""
 wwget [option] url
-""".trim);
+  --selector SELECTOR
+  --out FILENAME
+  --stdout
+    """.trim);
   }
 
 }
