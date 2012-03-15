@@ -15,13 +15,17 @@ case class UrlInfo (
   query: Option[Seq[(String, Option[String])]]
 ){
 
-  def url: String = {
+  def urlWithAuth: String = getUrlSub(true);
+
+  def url: String = getUrlSub(false);
+
+  private def getUrlSub(includingAuth: Boolean): String = {
     scheme + "://" +
-    (if(!usernameAndPassword.isDefined){
+    (if(!includingAuth || !usernameAndPassword.isDefined){
       "";
     } else {
       val u = usernameAndPassword.get;
-      u._1 + ":" + u._2;
+      u._1 + ":" + u._2 + "@";
     }) +
     host +
     (if(!port.isDefined){
@@ -153,6 +157,14 @@ object UrlInfo {
             Some(List(("A", Some(""))))).addQueryParams(Map("A" -> "2"))
         )
       );
+    }
+  }
+
+  def defaultPort(scheme: String): Int = {
+    scheme match {
+      case "http" => 80;
+      case "https" => 443;
+      case _ => throw new IllegalArgumentException;
     }
   }
 

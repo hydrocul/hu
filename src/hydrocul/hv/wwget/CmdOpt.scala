@@ -47,6 +47,19 @@ private[wwget] object CmdOpt {
 
   }
 
+  case class Recursive (
+    scheme: Option[String],
+    usernameAndPassword: Option[(String, String)],
+    host: String,
+    port: Option[Int],
+    basePath: String,
+    outputPath: String
+  ){
+
+    def eatUrl(url: String): Option[(String, String)] = new RecursiveProcessor(this).eatUrl(url);
+
+  }
+
 }
 
 private[wwget] case class CmdOptBuilder (
