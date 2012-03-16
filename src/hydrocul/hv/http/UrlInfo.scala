@@ -20,6 +20,12 @@ case class UrlInfo (
   def url: String = getUrlSub(false);
 
   private def getUrlSub(includingAuth: Boolean): String = {
+    getSchemeAuthHostPort(includingAuth) +
+    path +
+    query.map("?" + UrlInfo.queryToUrlEncoded(_)).getOrElse("");
+  }
+
+  private def getSchemeAuthHostPort(includingAuth: Boolean): String = {
     scheme + "://" +
     (if(!includingAuth || !usernameAndPassword.isDefined){
       "";
@@ -32,9 +38,7 @@ case class UrlInfo (
       "";
     } else {
       ":" + port.get;
-    }) +
-    path +
-    query.map("?" + UrlInfo.queryToUrlEncoded(_)).getOrElse("");
+    });
   }
 
   def requestPath: String = {
@@ -62,9 +66,87 @@ case class UrlInfo (
     UrlInfo(scheme, usernameAndPassword, host, port, path, Some(newQuery));
   }
 
+  def createUrl(relativePath: String): Option[UrlInfo] =
+    createUrlSub(relativePath, true);
+
+  private def createUrlSub(relativePath: String, first: Boolean): Option[UrlInfo] = {
+    if(first){
+      val p = relativePath.indexOf('#');
+      if(p >= 0){
+        return createUrlSub(relativePath.substring(0, p), first);
+      }
+    }
+    val relativePathI = relativePath.toLowerCase;
+    if(first && relativePathI.startsWith("mailto:")){
+      None;
+    } else if(first && relativePathI.startsWith("javascript:")){
+      None;
+    } else if(first && relativePathI.startsWith("tel:")){
+      None;
+    } else if(first && relativePathI.startsWith("http://")){
+      Some(UrlInfo(relativePath));
+    } else if(first && relativePathI.startsWith("https://")){
+      Some(UrlInfo(relativePath));
+    } else if(first && relativePath.startsWith("//")){
+      Some(UrlInfo(scheme + ":" + relativePath));
+    } else if(first && relativePath.startsWith("/")){
+      Some(UrlInfo(getSchemeAuthHostPort(true) + relativePath));
+    } else if(relativePath.isEmpty){
+      Some(this);
+    } else if(relativePath.equals(".")){
+      Some(dirUrl);
+    } else if(relativePath.equals("..")){
+      parentDirUrl match {
+        case None => Some(this);
+        case Some(u) => Some(u);
+      }
+    } else if(relativePath.startsWith("./")){
+      dirUrl.createUrlSub(relativePath.substring(2), false);
+    } else if(relativePath.startsWith("../")){
+      parentDirUrl match {
+        case None => createUrlSub(relativePath.substring(3), false);
+        case Some(u) => u.createUrlSub(relativePath.substring(3), false);
+      }
+    } else {
+      val p = relativePath.indexOf('/');
+      if(p < 0){
+        Some(UrlInfo(urlWithAuth + relativePath));
+      } else {
+        UrlInfo(urlWithAuth + relativePath.substring(0, p + 1)).
+          createUrlSub(relativePath.substring(p + 1), false);
+      }
+    }
+  }
+
+  private def dirUrl: UrlInfo = {
+    if(path.isEmpty){
+      this;
+    } else {
+      val p = path.lastIndexOf('/');
+      UrlInfo(scheme, usernameAndPassword, host, port, path.substring(0, p + 1), query);
+    }
+  }
+
+  private def parentDirUrl: Option[UrlInfo] = {
+    if(path.isEmpty){
+      None;
+    } else {
+      val p = path.lastIndexOf('/');
+      val p2 = path.substring(0, p).lastIndexOf('/');
+      if(p2 < 0){
+        None;
+      } else {
+        Some(UrlInfo(scheme, usernameAndPassword, host, port, path.substring(0, p + 1), query));
+      }
+    }
+  }
+
 }
 
 object UrlInfo {
+
+  private val Pattern1 = "(https?)://([^/]+)".r;
+  private val Pattern2 = "(https?)://([^/]+)(/.*)".r;
 
   def apply(url: String): UrlInfo = {
     url match {
