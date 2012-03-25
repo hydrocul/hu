@@ -1,5 +1,7 @@
 package hydrocul.hv.http;
 
+import hydrocul.hv.EncodingMania;
+
 /**
  * URLをパースした結果を保持するクラス。
  * URLの文字列に戻したときに正確に元のURLを再現できるように
@@ -12,7 +14,7 @@ case class UrlInfo private (
   host: String,
   port: Option[Int],
   path: String, // "/" から始まる文字列。ドメインまたはポート番号で終わるURLの場合は、空文字列。
-  query: Option[Seq[(String, Option[String])]],
+  query: Option[Seq[(String, Option[String])]], // クエリの文字列はURLエンコード済み
   anchor: Option[String]
 ){
 
@@ -35,6 +37,10 @@ case class UrlInfo private (
       val u = usernameAndPassword.get;
       u._1 + ":" + u._2 + "@";
     }) +
+    hostAndPort;
+  }
+
+  def hostAndPort: String = {
     host +
     (if(!port.isDefined){
       "";
@@ -207,16 +213,56 @@ object UrlInfo {
   }
 
   /**
-   * a=1&b=2 の形式の文字列にする。引数に渡すパラメータはURLエンコード済みの前提とする。
+   * "a=1&b=2" の形式の文字列にする。
+   * 引数に渡すパラメータはURLエンコード済みの前提とする。
    */
   private[http] def queryToUrlEncoded(query: Seq[(String, Option[String])]): String = {
+    queryToUrlEncoded(query, None);
+  }
+
+  /**
+   * "a=1&b=2" の形式の文字列にする。encoding=None の場合は
+   * 引数に渡すパラメータはURLエンコード済みの前提とする。
+   */
+  private[http] def queryToUrlEncoded(query: Seq[(String, Option[String])],
+      encoding: Option[String]): String = {
     query.map { p =>
-      if(!p._2.isDefined){
-        p._1;
+      val p2 = if(encoding.isDefined){
+        (
+          EncodingMania.encodeUrl(p._1, encoding.get),
+          p._2.map(EncodingMania.encodeUrl(_, encoding.get))
+        );
       } else {
-        p._1 + "=" + p._2.get;
+        p;
+      }
+      if(!p2._2.isDefined){
+        p2._1;
+      } else {
+        p2._1 + "=" + p._2.get;
       }
     }.mkString("&");
+  }
+
+  /**
+   * "a=1; b=2;" の形式の文字列にする。引数に渡すパラメータはURLエンコード済みの前提とする。
+   */
+  private[http] def cookieToUrlEncoded(query: Seq[(String, Option[String])],
+      encoding: Option[String]): String = {
+    query.map { p =>
+      val p2 = if(encoding.isDefined){
+        (
+          EncodingMania.encodeUrl(p._1, encoding.get),
+          p._2.map(EncodingMania.encodeUrl(_, encoding.get))
+        );
+      } else {
+        p;
+      }
+      if(!p2._2.isDefined){
+        p2._1;
+      } else {
+        p2._1 + "=" + p._2.get;
+      }
+    }.mkString("", "; ", ";");
   }
 
   private val UrlPattern1 = ("(https?)://([^/]+)([^#]*)").r;

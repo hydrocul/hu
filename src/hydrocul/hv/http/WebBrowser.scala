@@ -52,6 +52,7 @@ object WebBrowser {
     testSub(all) ++
     List[(String, Function0[Seq[Option[String]]])](
       ("http.UrlInfo", UrlInfo.test),
+      ("http.Cookie", Cookie.test),
       ("http.Response", Response.test)
     );
   }
