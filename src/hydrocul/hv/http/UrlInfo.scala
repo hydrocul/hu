@@ -6,13 +6,14 @@ package hydrocul.hv.http;
  * パラメータの順序などの必要な情報を保持している。
  * アンカーリンク("#")には対応していない。
  */
-case class UrlInfo (
+case class UrlInfo private (
   scheme: String,
   usernameAndPassword: Option[(String, String)],
   host: String,
   port: Option[Int],
   path: String, // "/" から始まる文字列。ドメインまたはポート番号で終わるURLの場合は、空文字列。
-  query: Option[Seq[(String, Option[String])]]
+  query: Option[Seq[(String, Option[String])]],
+  anchor: Option[String]
 ){
 
   def urlWithAuth: String = getUrlSub(true);
@@ -22,7 +23,8 @@ case class UrlInfo (
   private def getUrlSub(includingAuth: Boolean): String = {
     getSchemeAuthHostPort(includingAuth) +
     path +
-    query.map("?" + UrlInfo.queryToUrlEncoded(_)).getOrElse("");
+    query.map("?" + UrlInfo.queryToUrlEncoded(_)).getOrElse("") +
+    anchor.map("#" + _).getOrElse("");
   }
 
   private def getSchemeAuthHostPort(includingAuth: Boolean): String = {
@@ -63,7 +65,11 @@ case class UrlInfo (
         seq :+ (key, Some(value));
       }
     }
-    UrlInfo(scheme, usernameAndPassword, host, port, path, Some(newQuery));
+    UrlInfo(scheme, usernameAndPassword, host, port, path, Some(newQuery), anchor);
+  }
+
+  def updateAnchor(anchor: Option[String]): UrlInfo = {
+    UrlInfo(scheme, usernameAndPassword, host, port, path, query, anchor);
   }
 
   def createUrl(relativePath: String): Option[UrlInfo] =
@@ -73,7 +79,14 @@ case class UrlInfo (
     if(first){
       val p = relativePath.indexOf('#');
       if(p >= 0){
-        return createUrlSub(relativePath.substring(0, p), first);
+        return createUrlSub(relativePath.substring(0, p), first).
+          map(_.updateAnchor(Some(relativePath.substring(p + 1))));
+      }
+    }
+    {
+      val p = relativePath.indexOf('#');
+      if(p >= 0){
+        throw new IllegalArgumentException(relativePath);
       }
     }
     val relativePathI = relativePath.toLowerCase;
@@ -110,9 +123,9 @@ case class UrlInfo (
     } else {
       val p = relativePath.indexOf('/');
       if(p < 0){
-        Some(UrlInfo(urlWithAuth + relativePath));
+        Some(UrlInfo(dirUrl.urlWithAuth + relativePath));
       } else {
-        UrlInfo(urlWithAuth + relativePath.substring(0, p + 1)).
+        UrlInfo(dirUrl.urlWithAuth + relativePath.substring(0, p + 1)).
           createUrlSub(relativePath.substring(p + 1), false);
       }
     }
@@ -120,10 +133,11 @@ case class UrlInfo (
 
   private def dirUrl: UrlInfo = {
     if(path.isEmpty){
-      this;
+      UrlInfo(scheme, usernameAndPassword, host, port, "/", None, None);
     } else {
+      // path は空文字列か "/" で始まる文字列
       val p = path.lastIndexOf('/');
-      UrlInfo(scheme, usernameAndPassword, host, port, path.substring(0, p + 1), query);
+      UrlInfo(scheme, usernameAndPassword, host, port, path.substring(0, p + 1), None, None);
     }
   }
 
@@ -131,12 +145,13 @@ case class UrlInfo (
     if(path.isEmpty){
       None;
     } else {
+      // path は空文字列か "/" で始まる文字列
       val p = path.lastIndexOf('/');
       val p2 = path.substring(0, p).lastIndexOf('/');
       if(p2 < 0){
         None;
       } else {
-        Some(UrlInfo(scheme, usernameAndPassword, host, port, path.substring(0, p + 1), query));
+        Some(UrlInfo(scheme, usernameAndPassword, host, port, path.substring(0, p2 + 1), None, None));
       }
     }
   }
@@ -145,21 +160,36 @@ case class UrlInfo (
 
 object UrlInfo {
 
-  private val Pattern1 = "(https?)://([^/]+)".r;
-  private val Pattern2 = "(https?)://([^/]+)(/.*)".r;
-
   def apply(url: String): UrlInfo = {
-    url match {
-      case UrlPattern11(scheme, host) =>
-        new UrlInfo(scheme, None, host, None, "", None);
-      case UrlPattern12(scheme, host, path) =>
-        new UrlInfo(scheme, None, host, None, path, None);
-      case UrlPattern13(scheme, host, path, query) =>
-        new UrlInfo(scheme, None, host, None, path, Some(parseQuery(query)));
-      // TODO ポート番号・認証情報に未対応
+    val (scheme, authHostPort, pathQuery, anchor) = url match {
+      case UrlPattern1(scheme, authHostPort, pathQuery) =>
+        (scheme, authHostPort, pathQuery, None);
+      case UrlPattern2(scheme, authHostPort, pathQuery, anchor) =>
+        (scheme, authHostPort, pathQuery, Some(anchor));
       case _ =>
         throw new IllegalArgumentException(url);
     }
+    val (usernameAndPassword, host, port) = authHostPort match {
+      case AuthHostPortPattern1(host) =>
+        (None, host, None);
+      case AuthHostPortPattern2(host, port) =>
+        (None, host, Some(port.toInt));
+      case AuthHostPortPattern3(id, pw, host) =>
+        (Some((id, pw)), host, None);
+      case AuthHostPortPattern4(id, pw, host, port) =>
+        (Some((id, pw)), host, Some(port.toInt));
+    }
+    val (path, query) = pathQuery match {
+      case PathQueryPattern1() =>
+        ("", None);
+      case PathQueryPattern2(path) =>
+        (path, None);
+      case PathQueryPattern3(query) =>
+        ("", Some(parseQuery(query)));
+      case PathQueryPattern4(path, query) =>
+        (path, Some(parseQuery(query)));
+    }
+    new UrlInfo(scheme, usernameAndPassword, host, port, path, query, anchor);
   }
 
   /**
@@ -189,13 +219,18 @@ object UrlInfo {
     }.mkString("&");
   }
 
-  // TODO 認証情報に未対応
-  private val UrlPattern11 = ("(https?)://([^:/]+)").r;
-  private val UrlPattern12 = ("(https?)://([^:/]+)" +     "(/[^?]*)").r;
-  private val UrlPattern13 = ("(https?)://([^:/]+)" +     "(/[^?]*)\\?(.*)").r;
-  private val UrlPattern21 = ("(https?)://([^:/]+)(:[0-9]+)").r;
-  private val UrlPattern22 = ("(https?)://([^:/]+)(:[0-9]+)(/[^?]*)").r;
-  private val UrlPattern23 = ("(https?)://([^:/]+)(:[0-9]+)(/[^?]*)\\?(.*)").r;
+  private val UrlPattern1 = ("(https?)://([^/]+)([^#]*)").r;
+  private val UrlPattern2 = ("(https?)://([^/]+)([^#]*)#(.*)").r;
+
+  private val AuthHostPortPattern1 = "([^:/]+)".r;
+  private val AuthHostPortPattern2 = "([^:/]+):([1-9][0-9]*)".r;
+  private val AuthHostPortPattern3 = "([^:@]+):([^:@]+)@([^:/]+)".r;
+  private val AuthHostPortPattern4 = "([^:@]+):([^:@]+)@([^:/]+):([1-9][0-9]*)".r;
+
+  private val PathQueryPattern1 = "".r;
+  private val PathQueryPattern2 = "(/[^?#]*)".r;
+  private val PathQueryPattern3 = "\\?([^#]*)".r;
+  private val PathQueryPattern4 = "(/[^?#]*)\\?([^#]*)".r;
 
   private[http] def test(): Seq[Option[String]] = {
     import hydrocul.hv.TestLib._;
@@ -207,36 +242,84 @@ object UrlInfo {
           assertEquals(url, actual.url)
         );
       }
-      sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "", None),
+      sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "", None, None),
         "http://www.yahoo.co.jp") ++
-      sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/", None),
+      sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/", None, None),
         "http://www.yahoo.co.jp/") ++
       sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-        Some(List(("A", Some("1"))))),
+        Some(List(("A", Some("1")))), None),
         "http://www.yahoo.co.jp/abc?A=1") ++
       sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-        Some(List(("A", Some("1")), ("B", Some("2"))))),
+        Some(List(("A", Some("1")), ("B", Some("2")))), None),
         "http://www.yahoo.co.jp/abc?A=1&B=2") ++
       sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-        Some(List(("A", None)))),
+        Some(List(("A", None))), None),
         "http://www.yahoo.co.jp/abc?A") ++
       sub(UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-        Some(List(("A", Some(""))))),
+        Some(List(("A", Some("")))), None),
         "http://www.yahoo.co.jp/abc?A=")
+    } ++
+    { // test UrlInfo#dirUrl
+      List(
+        assertEquals(
+          UrlInfo("http://www.yahoo.co.jp/"),
+          UrlInfo("http://www.yahoo.co.jp").dirUrl
+        ),
+        assertEquals(
+          UrlInfo("http://www.yahoo.co.jp/"),
+          UrlInfo("http://www.yahoo.co.jp/").dirUrl
+        ),
+        assertEquals(
+          UrlInfo("http://www.yahoo.co.jp/"),
+          UrlInfo("http://www.yahoo.co.jp/abc").dirUrl
+        ),
+        assertEquals(
+          UrlInfo("http://www.yahoo.co.jp/abc/"),
+          UrlInfo("http://www.yahoo.co.jp/abc/").dirUrl
+        ),
+        assertEquals(
+          UrlInfo("http://www.yahoo.co.jp/abc/"),
+          UrlInfo("http://www.yahoo.co.jp/abc/def").dirUrl
+        )
+      );
+    } ++
+    { // test UrlInfo#parentDirUrl
+      List(
+        assertEquals(
+          None,
+          UrlInfo("http://www.yahoo.co.jp").parentDirUrl
+        ),
+        assertEquals(
+          None,
+          UrlInfo("http://www.yahoo.co.jp/").parentDirUrl
+        ),
+        assertEquals(
+          None,
+          UrlInfo("http://www.yahoo.co.jp/abc").parentDirUrl
+        ),
+        assertEquals(
+          Some(UrlInfo("http://www.yahoo.co.jp/")),
+          UrlInfo("http://www.yahoo.co.jp/abc/").parentDirUrl
+        ),
+        assertEquals(
+          Some(UrlInfo("http://www.yahoo.co.jp/")),
+          UrlInfo("http://www.yahoo.co.jp/abc/def").parentDirUrl
+        )
+      );
     } ++
     { // test UrlInfo#addQueryParams
       List(
         assertEquals(
           UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-            Some(List(("A", Some("")), ("B", Some("2"))))),
+            Some(List(("A", Some("")), ("B", Some("2")))), None),
           UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-            Some(List(("A", Some(""))))).addQueryParams(Map("B" -> "2"))
+            Some(List(("A", Some("")))), None).addQueryParams(Map("B" -> "2"))
         ),
         assertEquals(
           UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-            Some(List(("A", Some("2"))))),
+            Some(List(("A", Some("2")))), None),
           UrlInfo("http", None, "www.yahoo.co.jp", None, "/abc",
-            Some(List(("A", Some(""))))).addQueryParams(Map("A" -> "2"))
+            Some(List(("A", Some("")))), None).addQueryParams(Map("A" -> "2"))
         )
       );
     }

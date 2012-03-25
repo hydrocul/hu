@@ -7,6 +7,8 @@ object UrlUtil {
    * relativePath が絶対パスの場合はそのまま返す。
    */
   def createUrl(baseUrl: String, relativePath: String): Option[String] = {
+    hydrocul.hv.http.UrlInfo(baseUrl).createUrl(relativePath).map(_.url);
+/*
     def sub(baseUrl: String, relativePath: String, first: Boolean): Option[String] = {
       if(first){
         baseUrl match {
@@ -66,6 +68,7 @@ object UrlUtil {
       }
     }
     sub(baseUrl.trim, relativePath.trim, true);
+*/
   }
 
   def createSelfDirUrl(url: String): String = {
