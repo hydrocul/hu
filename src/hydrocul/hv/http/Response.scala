@@ -39,8 +39,13 @@ trait Response {
   def charset: Option[String] =
     _contentTypeField.flatMap(_._2);
 
+  def toStringHeader: String = {
+    "StatusCode: " + statusCode + "\n" +
+    responseHeader.map(t => t._1 + ": " + t._2).mkString("\n") + "\n";
+  }
+
   def toStringDigest: String = {
-    "StatusCode: " + statusCode + "\n"
+    "StatusCode: " + statusCode + "\n" +
     location.map("Location: " + _ + "\n").getOrElse("") +
     contentType.map("ContentType: " + _ + "\n").getOrElse("") +
     charset.map("Charset: " + _ + "\n").getOrElse("");
