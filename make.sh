@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# ./make.sh
+#   一部のテストケースを省略したビルド
+# ./make.sh testall
+#   すべてのテストケースを実行したビルド
+
 echo cd `dirname $0`
 cd `dirname $0`
 
