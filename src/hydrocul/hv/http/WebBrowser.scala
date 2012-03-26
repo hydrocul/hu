@@ -3,6 +3,19 @@ package hydrocul.hv.http;
 import hydrocul.hv.EncodingMania;
 
 class WebBrowser private () {
+  // classは存在意義がないが、過去との互換性のために維持しておく
+
+  def doGet(url: String): Page =
+    WebBrowser.doGet(url);
+
+  def doPost(url: String, postParam: Map[String, String]): Page =
+    WebBrowser.doPost(url, postParam);
+
+}
+
+object WebBrowser {
+
+  def create(): WebBrowser = new WebBrowser(); // 過去との互換性のために維持しておく
 
   def doGet(url: String): Page = {
     val urlInfo = UrlInfo(url);
@@ -36,17 +49,6 @@ class WebBrowser private () {
     }
   }
 
-}
-
-object WebBrowser {
-
-  def create(): WebBrowser = new WebBrowser();
-
-  def doGet(url: String): Page = create().doGet(url);
-
-  def doPost(url: String, postParam: Map[String, String]): Page =
-    create().doPost(url, postParam);
-
   private[hv] def test(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
     import hydrocul.hv.TestLib._;
     testSub(all) ++
@@ -63,7 +65,7 @@ object WebBrowser {
     }
     import hydrocul.hv.TestLib._;
     ("http.Webbrowser", { () =>
-      val browser = WebBrowser.create();
+      val browser = WebBrowser;
       val page1 = browser.doGet("http://www.yahoo.co.jp/");
       val page2 = browser.doGet("https://twitter.com/");
       val page3 = browser.doPost("http://www.ugtop.com/spill.shtml",
