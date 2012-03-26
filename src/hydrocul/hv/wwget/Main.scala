@@ -34,7 +34,7 @@ object Main {
         }
     }
 
-    val browser = WebBrowser.create();
+    val browser =  WebBrowser;
     val page = browser.doGet(cmdOpt.url);
 
     cmdOpt.selector match {

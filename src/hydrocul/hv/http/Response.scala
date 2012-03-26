@@ -16,6 +16,9 @@ trait Response {
   def responseHeaderField(key: String): Option[String] =
     responseHeader.reverse.find(_._1 == key).map(_._2);
 
+  def responseHeaderFields(key: String): Seq[String] =
+    responseHeader.reverse.filter(_._1 == key).map(_._2);
+
   def location: Option[String] =
     responseHeaderField("Location");
 
@@ -38,6 +41,9 @@ trait Response {
 
   def charset: Option[String] =
     _contentTypeField.flatMap(_._2);
+
+  def cookies: Seq[String] =
+    responseHeaderFields("Set-Cookie");
 
   def toStringHeader: String = {
     "StatusCode: " + statusCode + "\n" +
