@@ -179,7 +179,7 @@ object EkikaraTableScraper {
       val expected2 = Vector(TrainTimePair("05:26", "05:35"), TrainTimePair("05:33", "05:42"));
       val result3 = result(1)(9);
       val expected3 = (TrainTimePair("06:31", "06:40"),
-        Some("http://ekikara.jp/newdata/detail/1310021/142287.htm"));
+        Some("http://ekikara.jp/newdata/detail/1310021/123601.htm"));
       List(
         assertEquals(expected1, result1),
         assertEquals(expected2, result2),
