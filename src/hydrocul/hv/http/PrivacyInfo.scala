@@ -36,6 +36,10 @@ class PrivacyInfo private (
     new PrivacyInfo(newCookies);
   }
 
+  override def toString(): String = {
+    cookies.map(_.toString).mkString("PrivacyInfo\n  ", "\n  ", "");
+  }
+
 }
 
 object PrivacyInfo {
