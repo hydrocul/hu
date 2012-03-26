@@ -8,7 +8,7 @@ import hydrocul.hv.EncodingMania;
  * パラメータの順序などの必要な情報を保持している。
  * アンカーリンク("#")には対応していない。
  */
-case class UrlInfo private (
+case class UrlInfo (
   scheme: String,
   usernameAndPassword: Option[(String, String)],
   host: String,

@@ -21,7 +21,7 @@ private[wwget] class RecursiveProcessor(opt: CmdOpt.Recursive){
         u;
       } else {
         UrlInfo(u.scheme, u.usernameAndPassword, u.host, u.port,
-          "/", u.query); // ドメインまたはポート番号で終わる場合は "/" を最後に付ける
+          "/", u.query, None); // ドメインまたはポート番号で終わる場合は "/" を最後に付ける
       }
     }
 
@@ -50,7 +50,7 @@ private[wwget] class RecursiveProcessor(opt: CmdOpt.Recursive){
       }
 
       val newUrlInfo = UrlInfo(urlInfo.scheme, opt.usernameAndPassword,
-        urlInfo.host, urlInfo.port, urlInfo.path, urlInfo.query);
+        urlInfo.host, urlInfo.port, urlInfo.path, urlInfo.query, None);
       Some((newUrlInfo.urlWithAuth, fpath));
 
     } else { // クローリングの対象外の場合
