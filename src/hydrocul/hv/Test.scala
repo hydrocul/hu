@@ -58,7 +58,7 @@ object Test {
   def test(all: Boolean): Seq[(String, Function0[Seq[Option[String]]])] = {
     http.WebBrowser.test(all) ++
     rosen.test(all) ++
-    mongodb.Mongo.test() ++
+    // mongodb.Mongo.test() ++
     List[(String, Function0[Seq[Option[String]]])](
       ("Test", testTest),
       ("CipherUtil", CipherUtil.test),
